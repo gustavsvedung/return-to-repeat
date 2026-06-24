@@ -83,6 +83,33 @@ bucket.
 - [ ] Reload preserves state (visit count etc. via localStorage; no reset)
 - [ ] **Screen doesn't sleep during playback** (NoSleep) — mobile only
 
+## Audio output paths
+
+Core feature: it has to sound right however the listener is hearing it. The big
+risk is **route changes** — switching output can change the sample rate and make
+Web Audio glitch, drop, or play at the wrong speed. Test each route both by
+**starting playback already on it** and by **switching to it mid-playback**.
+
+For each route below, confirm: audio plays, **no distortion/crackle**, correct
+**stereo** (not mono, channels not swapped), reasonable volume, and **stays
+playing through a mid-track output switch**.
+
+- [ ] **Internal speaker** (iPhone, iPad, laptop) — baseline
+- [ ] **Wired headphones via dongle/DAC** — iPhone 13 mini has no jack, so a
+  Lightning→3.5mm dongle (Apple's built-in DAC) and, if you have one, a separate
+  USB/Lightning DAC dongle. Confirm switching *to* wired while playing doesn't drop audio.
+- [ ] **Bluetooth headphones/earbuds** (AirPods + one non-Apple pair if possible) —
+  watch for latency, codec artifacts, and a glitch at the moment of connect
+- [ ] **AirPlay** to a speaker/TV (iOS) — **known suspect, Omni 2**; compare Safari vs Firefox iOS
+- [ ] **Cast** to external speakers (Android/desktop Chrome → Chromecast/Google speaker), if available
+- [ ] **Mid-playback switch sweep:** while a track loops, move speaker → BT → back,
+  and plug/unplug wired. Audio should follow the route without dying or desyncing
+  the stems. (If stems drift only after a switch, that's a clue distinct from Three 1.)
+
+> Note: the riskiest combo for this app is **interactive stems + route change** —
+> a sample-rate shift could knock stems out of alignment. Pay extra attention on
+> Track 3 (vocals) and Track 7 (drones) when switching output.
+
 ## Layout / responsive (the recent work)
 - [ ] **iPhone mini:** card fills screen; title is two lines (`GUS BY HEART` / `RETURN TO REPEAT`), **no wrap**; controls sit where intended; lyric pinned bottom above VU
 - [ ] **iPad:** card is **top-anchored (~80px), not dead-center**; title doesn't wrap; credits window centers over the card
