@@ -772,6 +772,7 @@ function createSampleStrip(controls) {
 
   // Helper: trigger a sample and update visual state
   function activateSample(sampleId, btn) {
+    if (!samplePlayer) return; // No samples loaded until the track is playing
     if (activeSampleId === sampleId) return; // Already active
 
     // Release previous
@@ -790,7 +791,7 @@ function createSampleStrip(controls) {
 
   // Helper: release current sample
   function deactivateCurrent() {
-    if (activeSampleId) {
+    if (activeSampleId && samplePlayer) {
       samplePlayer.release(activeSampleId);
       if (activeButton) activeButton.classList.remove('active');
       activeSampleId = null;
