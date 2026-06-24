@@ -33,4 +33,9 @@ When logging a new bug, note the **device/browser** and whether it's **reproduci
 
 ## Design decisions
 
-- [ ] **[Omni 3b] Should track controls work before playback starts?** Now that controls render pre-play, what should pressing a flute (or toggle/fader) do when the track isn't playing — nothing (current/after null-guard), or auto-start playback then apply? Decide the intended UX.
+- [x] **[Omni 3b] Track controls work before playback starts.** DECIDED: stateful
+  controls (toggle, stem-select, fader) respond immediately when paused — the
+  LED/fill updates and the choice is remembered, then applied to the stems the
+  moment playback starts (via a `trackControlIntent` layer in main.js). Clicking
+  does **not** auto-start playback. One-shot flutes (T5) stay a no-op until play
+  (nothing stateful to remember). Implemented; verify in testing.

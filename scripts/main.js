@@ -28,6 +28,12 @@ let stemPlayer = null;
 let samplePlayer = null;
 let preloader = new TrackPreloader();
 
+// What the interactive controls currently show, independent of the audio engine.
+// Lets toggles/stem-select/faders respond (and be remembered) before playback
+// starts; applied to the StemPlayer just before it starts. Keyed by stem id:
+//   { kind: 'mute', muted: bool }  |  { kind: 'volume', volume: 0..1 }
+let trackControlIntent = {};
+
 let noSleep = null;
 let listenTimer = null;
 let preloadTimer = null;
@@ -262,7 +268,8 @@ async function loadAndPlayTrack(trackIndex) {
       if (loadGeneration !== thisGeneration) return; // Cancelled
     }
 
-    // Start playback
+    // Apply any control choices made before playback, then start
+    applyControlIntent(stemPlayer);
     stemPlayer.start();
     isPlaying = true;
     updatePlayButton();
@@ -300,7 +307,8 @@ async function togglePlayback() {
     stopListenTimer();
     stopVuMeter();
   } else {
-    // Fade in on resume — prevents click
+    // Apply any control changes made while paused, then fade in on resume
+    applyControlIntent(stemPlayer);
     stemPlayer.start(true);
     noSleep.enable();
     startListenTimer(tracks[currentTrackIndex].id);
@@ -428,13 +436,47 @@ async function stopPlayback(fade = true) {
 
 // --- Track Controls Rendering ---
 
+// Seed the intent map from the controls' default states (called on every render).
+function seedControlIntent(controls) {
+  trackControlIntent = {};
+
+  // Stem-select is a radio group: the active stem is on, the rest muted.
+  const stemSelect = controls.filter(c => c.type === 'stem-select');
+  let activeIdx = stemSelect.findIndex(c => c.active);
+  if (activeIdx < 0 && stemSelect.length) activeIdx = 0;
+  stemSelect.forEach((c, i) => {
+    trackControlIntent[c.stem] = { kind: 'mute', muted: i !== activeIdx };
+  });
+
+  for (const c of controls) {
+    if (c.type === 'toggle' || c.type === 'mute') {
+      trackControlIntent[c.stem] = { kind: 'mute', muted: !c.defaultOn };
+    } else if (c.type === 'fader') {
+      trackControlIntent[c.stem] = { kind: 'volume', volume: 0 };
+    }
+  }
+}
+
+// Push the current intent onto a loaded StemPlayer, just before it starts.
+function applyControlIntent(player) {
+  if (!player || !player.stemStates) return;
+  for (const [stem, it] of Object.entries(trackControlIntent)) {
+    if (!player.stemStates[stem]) continue;
+    if (it.kind === 'volume') player.setVolume(stem, it.volume);
+    else player.setMuted(stem, it.muted);
+  }
+}
+
 function renderTrackControls(track, variation) {
   if (!controlsContainer) return;
 
   controlsContainer.innerHTML = '';
+  trackControlIntent = {};
 
   const controls = track.getControls(variation);
   if (!controls || controls.length === 0) return;
+
+  seedControlIntent(controls);
 
   // Group sample/hold buttons into a strip for slide-to-play
   const sampleControls = controls.filter(c => c.type === 'button' && c.behavior === 'hold');
@@ -509,15 +551,17 @@ function createMuteButton(control) {
   button.dataset.inverted = control.inverted || false;
   button.innerHTML = `<i class="fa-solid fa-${control.icon || 'volume-high'}"></i>`;
 
-  // Initial state
-  const state = stemPlayer.stemStates[control.stem];
-  if (state) {
-    button.classList.toggle('muted', state.muted);
-  }
+  // Initial state from intent (no audio engine needed before playback)
+  const seed = trackControlIntent[control.stem];
+  const initialMuted = seed ? seed.muted : !control.defaultOn;
+  button.classList.toggle('muted', control.inverted ? !initialMuted : initialMuted);
 
   button.addEventListener('click', () => {
-    const newMuted = stemPlayer.toggleMute(control.stem);
+    const entry = trackControlIntent[control.stem] || { kind: 'mute', muted: !control.defaultOn };
+    const newMuted = !entry.muted;
+    trackControlIntent[control.stem] = { kind: 'mute', muted: newMuted };
     button.classList.toggle('muted', control.inverted ? !newMuted : newMuted);
+    if (isPlaying && stemPlayer) stemPlayer.setMuted(control.stem, newMuted);
   });
 
   return button;
@@ -549,8 +593,12 @@ function createToggleButton(control) {
   button.addEventListener('touchcancel', () => button.classList.remove('pressed'), { passive: true });
 
   button.addEventListener('click', () => {
-    const newMuted = stemPlayer.toggleMute(control.stem);
+    // Toggle intent first, so the control responds even before playback starts.
+    const entry = trackControlIntent[control.stem] || { kind: 'mute', muted: !control.defaultOn };
+    const newMuted = !entry.muted;
+    trackControlIntent[control.stem] = { kind: 'mute', muted: newMuted };
     led.classList.toggle('on', !newMuted);
+    if (isPlaying && stemPlayer) stemPlayer.setMuted(control.stem, newMuted);
   });
 
   wrapper.appendChild(led);
@@ -705,7 +753,8 @@ function createFaderGroup(controls) {
       let value = (rect.bottom - clientY) / rect.height;
       value = Math.max(0, Math.min(1, value));
       fill.style.height = `${value * 100}%`;
-      if (stemPlayer) stemPlayer.setVolume(control.stem, value);
+      trackControlIntent[control.stem] = { kind: 'volume', volume: value };
+      if (isPlaying && stemPlayer) stemPlayer.setVolume(control.stem, value);
     };
 
     let dragging = false;
@@ -949,13 +998,20 @@ function createStemSelectGroup(controls) {
     button.addEventListener('click', () => {
       if (index === activeIndex) return; // Already active — nothing to do
 
-      // Mute the previously active stem
-      stemPlayer.setMuted(controls[activeIndex].stem, true);
-      leds[activeIndex].classList.remove('on');
+      const prevStem = controls[activeIndex].stem;
+      const nextStem = control.stem;
 
-      // Unmute the newly selected stem
-      stemPlayer.setMuted(control.stem, false);
+      // Update intent so the selection sticks even before playback starts
+      trackControlIntent[prevStem] = { kind: 'mute', muted: true };
+      trackControlIntent[nextStem] = { kind: 'mute', muted: false };
+
+      leds[activeIndex].classList.remove('on');
       led.classList.add('on');
+
+      if (isPlaying && stemPlayer) {
+        stemPlayer.setMuted(prevStem, true);
+        stemPlayer.setMuted(nextStem, false);
+      }
 
       activeIndex = index;
     });
