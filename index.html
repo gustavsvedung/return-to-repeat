@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>RETURN TO REPEAT</title>
+    <meta name="description" content="An interactive music player by Gus By Heart.">
+    <meta name="keywords" content="music, audio, loop player, Gus By Heart, Return to Repeat">
+    <meta name="author" content="Gus By Heart">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;1,200&family=EB+Garamond:ital,wght@1,400&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://kit.fontawesome.com/de40dc0d25.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.39/build/Tone.min.js"></script>
+</head>
+<body>
+    <div class="container track-1">
+
+        <!-- Section: Header -->
+        <header>
+            <h1>Gus by Heart<br>Return to Repeat</h1>
+        </header>
+
+        <!-- Section: Track title -->
+        <div class="track-name">
+            <h2 class="track-title">one</h2>
+        </div>
+
+        <!-- Section: Track-specific area (flex-grows to fill space) -->
+        <div class="track-area">
+            <!-- Track-specific controls (mute buttons, faders, etc.) -->
+            <div id="track-controls" class="track-controls"></div>
+
+            <!-- Tagline / lyric line shown below the controls -->
+            <p id="track-tagline" class="track-tagline"></p>
+        </div>
+
+        <!-- Section: VU LEDs -->
+        <div class="vu-leds" id="vu-leds">
+            <div class="vu-segment" data-level="1"></div>
+            <div class="vu-segment" data-level="2"></div>
+            <div class="vu-segment" data-level="3"></div>
+            <div class="vu-segment" data-level="4"></div>
+            <div class="vu-segment" data-level="5"></div>
+        </div>
+
+        <!-- Section: Transport controls -->
+        <div class="transport">
+            <button id="play-button" class="transport-btn" aria-label="Play">
+                <i class="fa-solid fa-play btn-icon"></i>
+            </button>
+            <div class="nav-buttons-container">
+                <button id="next-button" class="transport-btn" aria-label="Next">
+                    <i class="fa-solid fa-forward-step btn-icon"></i>
+                </button>
+                <button id="shuffle-button" class="transport-btn" aria-label="Shuffle">
+                    <i class="fa-solid fa-shuffle btn-icon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Section: Footer -->
+        <footer>
+            <p id="credits-trigger">NOTES</p>
+        </footer>
+
+        <!-- Credits (opens from footer, closes on outside click).
+             Backdrop is full-screen; the window is centred over the card. -->
+        <div id="credits-overlay" class="credits-overlay" hidden></div>
+        <div id="credits-window" class="credits-window" hidden>
+            <p>Composed, performed, recorded and built by Gus By Heart, except</p>
+            <ul>
+                <li>3 – vocals by Frida Svedung</li>
+                <li>7 – vocals by Ilse Svedung</li>
+            </ul>
+            <p><a href="https://www.gusbyheart.se" target="_blank" rel="noopener">www.gusbyheart.se</a></p>
+            <p>℗ &amp; © 2026 Gustav Svedung</p>
+        </div>
+
+    </div>
+    <script src="scripts/main.js" type="module"></script>
+</body>
+</html>

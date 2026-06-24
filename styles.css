@@ -1,0 +1,720 @@
+/* === Design Tokens === */
+
+:root {
+    --bg:        #B8D5DD;
+    --ink:       #111;
+    --title-ink: #404040;
+    --muted:     #6b7d82;
+    --line:      #9da9ac;
+}
+
+/* === Base Styles === */
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #FFF8DC;
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    transition: background-color 0.3s ease;
+    touch-action: manipulation;
+}
+
+ul {
+    list-style-type: none;
+    margin-top: -0.5rem;
+    padding-left: 1.5rem;
+}
+
+/* === Container — phone-sized card, centred/top-anchored on larger screens === */
+
+.container {
+    width: 100%;
+    max-width: 380px;
+    height: 100dvh;
+    /* Cap the height so on large screens (iPad, desktop) the player stays a
+       phone-sized card centred in the track-colour field, instead of
+       stretching to full viewport height and spreading its sections apart.
+       On a phone, 100dvh is below this cap, so nothing changes there. */
+    max-height: 780px;
+    padding: 28px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* === Section: Header === */
+
+header {
+    text-align: left;
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    /* Base size for iPad/desktop/tall phones. The mini re-asserts 2.4rem in
+       its @media (max-height: 700px) block, so this only affects larger
+       screens — keeps "Return to Repeat" on one line in the 380px column. */
+    font-size: 2.2rem;
+    line-height: 1.06;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    color: var(--title-ink);
+    margin: 0;
+}
+
+/* === Section: Track Name === */
+
+.track-name {
+    flex-shrink: 0;
+    padding: 20px 0 0;
+}
+
+.track-name .track-title {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 3rem;      /* 40px */
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.06em;
+    text-transform: lowercase;
+    color: var(--ink);
+    margin: 0 0 36px;
+}
+
+/* Single curated line shown BELOW the track controls inside .track-area.
+   width: 100% is required for text-align: right to behave inside the flex
+   column (otherwise the element would shrink to fit its text). */
+.track-tagline {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-transform: lowercase;
+    color: var(--ink);
+    opacity: 0.8;
+    text-align: right;
+    width: 100%;
+    margin: auto 0 0;
+    padding-right: 4px;
+}
+
+/* Collapse when there is no tagline for this track */
+.track-tagline:empty {
+    display: none;
+    margin: 0;
+}
+
+/* === Section: Track Area (flex-grows to fill) === */
+
+.track-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: hidden;
+    min-height: 0;
+    /* padding-top: push buttons DOWN from the track title.
+       Increase to move buttons lower, decrease to move them up. */
+    padding: 80px 0 32px;
+    /* padding-bottom: gap between lyric line and VU LEDs.
+       The tagline always sticks to the bottom via margin-top:auto. */
+}
+
+/* === Section: VU LEDs (Braun inspired, round) === */
+
+.vu-leds {
+    flex-shrink: 0;
+    height: 24px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    margin-bottom: 10px;
+}
+
+.vu-segment {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #2a2a2a;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    transition: background 0.06s;
+}
+
+/* Green segments (1-3) when lit */
+.vu-segment.lit[data-level="1"],
+.vu-segment.lit[data-level="2"],
+.vu-segment.lit[data-level="3"] {
+    background: #5ab860;
+}
+
+/* Yellow segment (4) when lit */
+.vu-segment.lit[data-level="4"] {
+    background: #d4b840;
+}
+
+/* Red segment (5) when lit */
+.vu-segment.lit[data-level="5"] {
+    background: #d45040;
+}
+
+/* === Section: Transport === */
+
+.transport {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 10px;
+}
+
+/* === Transport Buttons (Rams/NAD style) === */
+
+.transport-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+    background: transparent;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.12s, opacity 0.12s;
+    overflow: hidden;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.transport-btn .btn-icon {
+    font-size: 0.95rem;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.transport-btn:active,
+.transport-btn.pressed {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.35);
+}
+
+.transport-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* === Play Button === */
+
+#play-button {
+    width: 100%;
+    height: 4.5rem;
+}
+
+#play-button.loading {
+    pointer-events: none;
+}
+
+#play-button.loading .btn-icon {
+    display: none;
+}
+
+#play-button .loading-spinner {
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.35);
+    animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+#play-button.locked {
+    opacity: 0.2;
+}
+
+/* === Navigation Buttons === */
+
+.nav-buttons-container {
+    display: flex;
+    width: 100%;
+    gap: 6px;
+}
+
+#next-button,
+#shuffle-button {
+    flex: 1;
+    height: 4.5rem;
+}
+
+/* === Shared button reset (for non-transport buttons) === */
+
+button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    padding: 0;
+    border: 2px solid #000;
+    background: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    overflow: hidden;
+    color: black;
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+button:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* === Track Controls (mute buttons, faders, sample buttons) === */
+
+.track-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 0;
+}
+
+.track-controls:empty {
+    display: none;
+}
+
+/* Control buttons (mute, sample, cycle) */
+.control-button {
+    width: 4.5rem;
+    height: 3.5rem;
+    font-size: 1.5rem;
+}
+
+.control-button.muted {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* Toggle button (transport-styled mute with LED) */
+.toggle-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-led {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2a2a2a;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    transition: background 0.15s;
+}
+
+.toggle-led.on {
+    background: #5ab860;
+}
+
+/* Effect LED — color is set inline by JS during animation, transition is short
+   so each frame's color change is smooth without lagging behind */
+.toggle-led.effect-led {
+    transition: background 0.05s linear;
+}
+
+.toggle-btn {
+    width: 4.5rem;
+    height: 4.5rem;
+}
+
+.toggle-btn .toggle-img {
+    height: 80%;
+    width: 80%;
+    object-fit: contain;
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.toggle-btn:active,
+.toggle-btn.pressed {
+    background: transparent;
+}
+
+/* Stem select group (Track 9 cat buttons — radio-group stem selector) */
+.stem-select-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Stem-select radio group buttons */
+.stem-select-btn {
+    width: 4.5rem;
+    height: 4.5rem;
+}
+
+/* Bird silhouette inside a sample-strip button — the PNG is used as a CSS mask,
+   so background-color (set per-button via inline style) becomes the bird's colour.
+   Explicit rem units avoid flex layout's percentage-resolution quirks. */
+.strip-img {
+    width: 3.5rem;
+    height: 3.5rem;
+    background-color: rgba(0, 0, 0, 0.5);  /* fallback if no color set */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    pointer-events: none;
+}
+
+/* Sample button strip — edge-to-edge, no gap */
+.sample-strip {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.sample-strip .sample-button {
+    flex: 1;
+    height: 7rem;
+    border-radius: 0;
+    border: 2px solid rgba(0, 0, 0, 0.22);
+    border-right: none;
+    font-size: 1.8rem;
+}
+
+.sample-strip .sample-button:last-child {
+    border-right: 2px solid rgba(0, 0, 0, 0.22);
+}
+
+.sample-strip .sample-button.active {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.35);
+}
+
+/* Disable browser :active state inside strip — we manage it via .active class */
+.sample-strip .sample-button:active {
+    background: none;
+}
+
+/* Fader strip (Track 7 drones) — three separate columns matching the mute
+   button width. Set the overall height here to make the faders "as tall as
+   fits". translateY nudges the whole strip up from vertical centre — make the
+   negative value larger to raise the faders higher. */
+.fader-strip {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    height: 15rem;
+    transform: translateY(-50px);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* When the controls row holds the fader strip, let it grow and centre the
+   faders vertically in the available space (keeps them off the lyric line). */
+.track-controls:has(.fader-strip) {
+    flex: 1 1 auto;
+    align-items: center;
+    min-height: 0;
+}
+
+.fader-col {
+    width: 4.5rem;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+    cursor: ns-resize;
+}
+
+/* Filled area below the set position. The fill is a shared translucent wash
+   (same on all three faders); the top edge is the handle, tinted per-note via
+   inline style from JS. Adjust the handle thickness with border-top-width. */
+.fader-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0%;
+    background: rgba(235, 230, 220, 0.12);
+    border-top: 6px solid rgba(235, 230, 220, 0.7);  /* fallback if no colour set */
+}
+
+/* === Locked Track 11 === */
+
+/* Blurred eel that sharpens with album completions.
+   Inert: no border, no LED, not interactive. The per-stage blur is set
+   inline by JS; the transition eases it if it ever changes live. */
+.locked-eel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.locked-eel-img {
+    width: 7rem;
+    height: auto;
+    opacity: 0.8;
+    pointer-events: none;
+    transition: filter 0.6s ease;
+}
+
+.container.locked .track-title {
+    filter: blur(2px);
+}
+
+/* === Footer === */
+
+footer {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 14px 0 8px;
+}
+
+footer p {
+    margin: 0;
+    /* font-family: 'Jost', sans-serif; */
+    font-size: 0.7rem;
+    font-weight: 100;
+    /* letter-spacing: 0.1em; */
+    word-spacing: 0.1em;
+    color: var(--ink);
+    /* opacity: 0.8; */
+}
+
+#credits-trigger {
+    cursor: pointer;
+    display: inline-block;
+}
+
+/* === Credits window === */
+
+/* Full-screen blurred backdrop + click-to-close target */
+.credits-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.credits-overlay[hidden],
+.credits-window[hidden] {
+    display: none;
+}
+
+/* Centred over the card (.container), not the viewport — so it sits over the
+   player on large screens where the card is anchored near the top. */
+.credits-window {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 101;
+    width: 280px;
+    max-width: calc(100% - 36px);
+    padding: 34px 28px;
+    border: 2px solid rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+    background: transparent;
+    font-family: 'EB Garamond', serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink);
+    text-align: left;
+}
+
+.credits-window p {
+    margin: 0 0 18px;
+}
+
+.credits-window p:last-child {
+    margin-bottom: 0;
+}
+
+.credits-window a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Light UI: lighten the window border to match the other controls */
+.container.light-ui .credits-window {
+    border-color: rgba(235, 230, 220, 0.45);
+}
+
+/* === Mobile Responsive === */
+
+@media (max-width: 600px) {
+    /* .container {
+        padding: 20px 14px 16px;
+    } */
+
+    .container {
+        padding: 16px 14px 12px;
+    }
+
+    .control-button {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.3rem;
+    }
+
+    .sample-strip .sample-button {
+        height: 6rem;
+    }
+
+    .strip-img {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .fader-strip {
+        height: 14rem;
+    }
+}
+
+/* Small phones (iPhone Mini etc.) */
+@media (max-height: 700px) {
+    .container {
+        padding: 16px 14px 12px;
+    }
+
+    header h1 {
+        font-size: 2.4rem;
+    }
+
+    .track-name {
+        padding: 12px 0 0;
+    }
+
+    .track-name .track-title {
+        /* font-size unchanged from base (3rem); only the spacing tightens */
+        margin-bottom: 20px;
+    }
+
+    #play-button {
+        height: 3.8rem;
+    }
+
+    #next-button,
+    #shuffle-button {
+        height: 3.8rem;
+    }
+
+    .vu-leds {
+        height: 18px;
+    }
+
+    .sample-strip .sample-button {
+        height: 5.5rem;
+    }
+
+    .strip-img {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+
+    .fader-strip {
+        height: 11rem;
+    }
+
+    footer {
+        padding: 6px 0 4px 0;
+    }
+}
+
+/* Tall screens (iPad portrait, large desktop windows): anchor the capped card
+   near the top with a fixed offset instead of dead-centring it. Phones stay
+   below this breakpoint, so their layout is untouched. The 900px floor keeps
+   the offset safely smaller than the available excess, so it never clips. */
+@media (min-height: 900px) {
+    body {
+        align-items: flex-start;
+    }
+
+    .container {
+        margin-top: 80px;
+    }
+}
+
+/* === Light UI mode (dark track backgrounds) === */
+
+.container.light-ui {
+    --ink:       rgba(235, 230, 220, 0.80);
+    --title-ink: rgba(235, 230, 220, 0.80);
+    --muted:      rgba(235, 230, 220, 0.6);
+}
+
+.container.light-ui .transport-btn {
+    border-color: rgba(235, 230, 220, 0.45);
+}
+
+.container.light-ui .transport-btn .btn-icon {
+    color: rgba(235, 230, 220, 0.7);
+}
+
+.container.light-ui .transport-btn:active,
+.container.light-ui .transport-btn.pressed {
+    background: rgba(235, 230, 220, 0.12);
+    border-color: rgba(235, 230, 220, 0.65);
+}
+
+.container.light-ui button {
+    border-color: rgba(235, 230, 220, 0.45);
+    color: rgba(235, 230, 220, 0.7);
+}
+
+.container.light-ui button:active {
+    background: rgba(235, 230, 220, 0.12);
+}
+
+.container.light-ui .sample-strip .sample-button {
+    border-color: rgba(235, 230, 220, 0.45);
+}
+
+.container.light-ui .sample-strip .sample-button:last-child {
+    border-right-color: rgba(235, 230, 220, 0.45);
+}
+
+.container.light-ui .sample-strip .sample-button.active {
+    background: rgba(235, 230, 220, 0.12);
+    border-color: rgba(235, 230, 220, 0.65);
+}
+
+.container.light-ui .fader-col {
+    border-color: rgba(235, 230, 220, 0.45);
+}

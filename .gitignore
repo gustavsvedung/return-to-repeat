@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Python (no-cache dev server)
+__pycache__/
+*.pyc
+
+# Node (Browsersync, if installed locally)
+node_modules/
+
+# Editor / local tooling
+*.log
