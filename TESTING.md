@@ -23,11 +23,33 @@ bucket.
   phone for a 15-min smoke test if you can; prioritize it only if iOS reveals
   audio/touch oddities.
 
-**Suggested plan (least effort, good coverage):**
-1. **Full pass:** iPhone 13 mini, **Safari** (design target + primary audience + surfaces the iOS audio bugs).
-2. **Layout check:** iPad Safari + macOS Safari/Chrome/Firefox (just the Layout section).
-3. **Shell spot-checks:** Firefox iOS (AirPlay), Chrome iOS (quick play/skip).
-4. **Android:** borrow → run the Core + Layout sections once, if possible.
+**Order to test in** (cheap-and-diagnosable first, device-specific last):
+1. **macOS Chrome, DevTools console open** — Core pass as a fast smoke test; catch
+   any gross JS error where it's easiest to debug. Hammer **Next rapidly** here (Omni 4/5).
+2. **macOS Firefox** — Layout, plus the **Three 1** stem-sync check (it was flagged here).
+3. **macOS Safari** — Layout only (confirm the 3 engines agree).
+4. **iPhone 13 mini, Safari — the FULL pass** (Web Inspector connected). Core +
+   Audio output paths + the known-issue repros, incl. the **lock-screen** test (Omni 1) and NoSleep.
+5. **iPad Air, Safari** — Layout (top-anchor, credits-over-card) + an interactive
+   spot-check (fader drag, slide-to-play on the bigger screen).
+6. **iPhone shell spot-checks** — Firefox iOS for **AirPlay** (Omni 2); Chrome iOS a quick play/skip.
+7. **Android (if borrowed)** — Core + Layout once.
+
+## Recording results
+- The checklists below are a **script** — leave their boxes unchecked; they don't
+  track state.
+- **Only log failures / oddities.** Passing is silent. For each problem, add a line
+  to the Findings log tagged `[device · browser]` with steps and whether it repeats.
+- Tick a row in the **pass tracker** when you finish that whole pass.
+
+## Pass tracker
+- [ ] macOS · Chrome — Core (smoke + console) + fast-skip
+- [ ] macOS · Firefox — Layout + Three 1 sync
+- [ ] macOS · Safari — Layout
+- [ ] iPhone 13 mini · Safari — **FULL** (Core + Audio paths + known issues)
+- [ ] iPad Air · Safari — Layout + interactive spot-check
+- [ ] iPhone · Firefox (AirPlay) + Chrome (quick) — shell spot-checks
+- [ ] Android · Chrome — Core + Layout *(if borrowed)*
 
 ---
 
