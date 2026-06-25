@@ -762,7 +762,10 @@ export class TrackPreloader {
    * @returns {StemPlayer|null}
    */
   getPreloaded(trackId) {
-    if (this.preloadedTrackId === trackId && this.preloadedPlayer) {
+    // Only hand back a *fully loaded* preload. preloadedPlayer is set before its
+    // audio finishes loading, so without the isLoaded check a fast skip onto a
+    // still-preloading track gets a half-loaded player and start() silently bails.
+    if (this.preloadedTrackId === trackId && this.preloadedPlayer && this.preloadedPlayer.isLoaded) {
       const player = this.preloadedPlayer;
       this.preloadedPlayer = null;
       this.preloadedTrackId = null;
@@ -782,10 +785,39 @@ export class TrackPreloader {
 
 // --- Audio Context Initialization (for iOS) ---
 
+let contextWarmed = false;
+
 export async function initAudioContext() {
   if (Tone.context.state !== 'running') {
     await Tone.start();
     console.log('Audio context started');
+  }
+  // Once, right after the context first starts, warm up the audio thread and the
+  // master chain (esp. the always-on 4x-oversample distortion node). On a cold
+  // context Blink underruns the first real buffers and the first track distorts
+  // (Chrome only, track 1 only). This runs during the track-load wait, so the
+  // chain is warm before audio actually plays. Fully silent and self-disposing.
+  if (!contextWarmed) {
+    contextWarmed = true;
+    warmUpMasterChain();
+  }
+}
+
+function warmUpMasterChain() {
+  try {
+    const chainInput = getMasterLimiter(); // top of chain (distortion node)
+    const osc = new Tone.Oscillator(40, 'sine');
+    const silent = new Tone.Gain(0).connect(chainInput); // gain 0 → never audible
+    osc.connect(silent);
+    osc.start();
+    osc.stop('+0.3');
+    // Dispose after it has stopped, with slack. Separate from real playback,
+    // which connects its own players to the same (already-warm) chain.
+    setTimeout(() => {
+      try { osc.dispose(); silent.dispose(); } catch (e) { /* already gone */ }
+    }, 700);
+  } catch (e) {
+    console.warn('Master chain warm-up skipped', e);
   }
 }
 

@@ -20,7 +20,7 @@ Steps 1–6 of [TESTING.md](TESTING.md) are done (Android pending — no device)
 most of the alarming entries. Suggested fix order:
 
 1. ~~**A — AudioContext resume on interruption**~~ ✅ **DONE & verified** (cleared 5+ findings + Omni 1)
-2. **B — Fast-skip / Track 11 loading-state race** (high; clears spinner + start distortion + Omni 4/5)
+2. ~~**B — Fast-skip / Track 11 loading-state race + cold-start distortion**~~ ✅ **DONE & verified** (spinner + start distortion + Omni 4/5)
 3. **D — Album-completion `>= 60` hardening** (trivial; do while nearby)
 4. **C — Three 1 vocal drift** (investigate audio files first; likely a re-export)
 5. **F — Layout scale-up on large viewports** (low; design/CSS polish)
@@ -95,7 +95,25 @@ Fix direction: resume `Tone.context` on `visibilitychange` / context `statechang
 **and** on the next user gesture; wire that same resume the load path already uses
 into the Play/resume handler. Investigate explicit interruption/route-change events.
 
-### B. Fast-skip / Track 11 loading-state race — **HIGH**
+### B. Fast-skip / Track 11 loading-state race + cold-start distortion — **[x] FIXED & verified on macOS Chrome (2026-06-25)**
+
+**Fixes landed:**
+- **Stuck spinner (root cause):** `stopPlayback()` cleared `isLoading` with a raw flag set but
+  left the spinner DOM + `loading` class on screen. The cancelled load's `finally` skips
+  `setLoadingState(false)` on a generation mismatch, and landing on locked Track 11 runs no new
+  load — so nothing cleared the visual. Now `stopPlayback()` calls `setLoadingState(false)`.
+  **Verified:** hammering Next across Track 11 no longer sticks the spinner (no reload needed).
+- **Preloader half-loaded race:** `getPreloaded()` returned `preloadedPlayer` before its audio
+  finished loading (the object is assigned before `await load()`), so a fast skip onto a
+  still-preloading track got a half-loaded player and `start()` silently bailed. Now guarded on
+  `preloadedPlayer.isLoaded`.
+- **Distortion (#2) — root cause found:** it was the **cold AudioContext**, not the fast-skip
+  race. Track 1, first play after a page reload, Chrome only — Blink underruns the first real
+  buffers through the always-on 4x-oversample master distortion node. A fade-in only half-masked
+  it and was rhythmically intrusive (reverted). Real fix: `initAudioContext()` now warms the
+  audio thread + master chain once with a **silent** (`Gain(0)`) tone right after `Tone.start()`,
+  during the MP3-load wait, so the chain is warm before audio plays (`warmUpMasterChain`).
+  **Verified gone** on macOS Chrome.
 
 Rapidly skipping **across the locked Track 11** leaves the loading state stuck.
 Track 11's "stop, don't load" path appears to leave a loading flag / generation

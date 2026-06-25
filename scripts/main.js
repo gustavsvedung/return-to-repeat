@@ -488,7 +488,10 @@ async function stopPlayback(fade = true) {
     samplePlayer = null;
   }
   isPlaying = false;
-  isLoading = false;
+  // Clear the loading *visual*, not just the flag. A raw `isLoading = false`
+  // left the spinner DOM + 'loading' class on screen; if the next track is
+  // locked (Track 11) no new load runs to clear it, so it stuck until reload.
+  setLoadingState(false);
   stopListenTimer();
   stopPreloadTimer();
   stopVuMeter();
