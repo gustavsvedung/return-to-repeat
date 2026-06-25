@@ -22,7 +22,7 @@ most of the alarming entries. Suggested fix order:
 1. ~~**A — AudioContext resume on interruption**~~ ✅ **DONE & verified** (cleared 5+ findings + Omni 1)
 2. ~~**B — Fast-skip / Track 11 loading-state race + cold-start distortion**~~ ✅ **DONE & verified** (spinner + start distortion + Omni 4/5)
 3. ~~**D — Album-completion `>= 60` hardening**~~ ✅ **DONE** (trivial robustness fix)
-4. **C — Three 1 vocal drift** (investigate audio files first; likely a re-export)
+4. ~~**C — Three 1 vocal drift**~~ ✅ **DONE & verified** (trim-logic fix; files were pristine — no re-export)
 5. **F — Layout scale-up on large viewports** (low; design/CSS polish)
 6. **E — AirPlay/Cast quality** (likely platform; document, maybe mitigate)
 
@@ -130,18 +130,28 @@ Folds in:
   longer reproducible (macOS Chrome) — `loadGeneration` guard handles the worst case;
   the race now surfaces as the spinner + distortion above. Resolve all together.
 
-### C. [Three 1] Vocal stem drift — **MEDIUM (likely audio re-export)**
+### C. [Three 1] Vocal stem drift — **[x] FIXED & verified on macOS Chrome (2026-06-25)** — **NOT a file problem; code fix**
 
-Frida **and** boy-soprano vocals drift out of sync with each loop, worsening over
-time; the kalimba holds. **Reproduces on desktop (Chrome + Firefox) but NOT on iOS
-(WebKit).** That platform-dependence + stem-specificity argues against a simple
-file-length mismatch (the math would drift identically on every engine) and points at
-a **sample-rate property of those specific vocal files** interacting with desktop loop
-scheduling, which WebKit happens to mask.
+**Files exonerated by measurement (afinfo):** all five Track 3 stems (03A + 03Avoc1–4) are
+**identical** — 48 kHz, 2 ch, 46.512000 s, 1938 packets, 1488384 bytes. No re-export needed.
 
-- [ ] Inspect the vocal stem files first — **sample rate** and length vs the loop — before
-  touching code. This is the flagged "audio re-export is the one exception to audio being final."
-- iOS listeners are unaffected.
+**Root cause (confirmed by console):** `trimBuffer` detected MP3 encoder padding *per stem* by
+silence search. The dense backing (03A) trimmed `start 993, end 1853` (59.3 ms); the sparse
+vocals are silent at the loop ends, so the search found nothing and left them **untrimmed** —
+59.3 ms longer than the backing. Since each `Tone.Player` loops at its own buffer length, the
+vocals fell ~59 ms behind every loop (compounding). Desktop only because Safari/iOS strips the
+padding natively, so there was no mismatch to expose.
+
+**Fix landed:** `detectTrimWindow` + `sliceBuffer` replace `trimBuffer`. One shared trim window is
+applied to every buffer of a track (so they stay equal-length / sample-locked), and that window is
+the **union of the widest musical extent** across all stems — earliest detected onset, latest
+detected offset. Silent edges don't vote, so a sparse stem can't leave its padding in and a stem
+with a quiet sustain/reverb tail can't get clipped. Benefits any multi-stem track.
+
+**Verified (macOS Chrome):** Track 3 holds sync; Track 9 (A1/A2/A3 + B variants) loops cleanly —
+the union fix resolved a loop-seam slip that the first "detect-on-main-only" version introduced
+(the main mix's quiet tail was being clipped and imposed on the keyboard stems). Files confirmed
+pristine via afinfo (all stems identical length), so no re-export — purely a trim-logic fix.
 
 ### D. Album-completion robustness — **LOW (mostly not a bug)**
 

@@ -18,57 +18,81 @@
 const AUDIO_PATH = 'audio/';
 
 // --- MP3 Padding Trimming ---
-// MP3 files have encoder padding (~1152 samples at start, variable at end)
-// Safari handles this natively but Firefox/Chrome leave gaps when looping
-// We trim silence from decoded buffers to achieve gapless loops
+// MP3 files have encoder padding (~1152 samples at start, variable at end).
+// Safari strips it natively, but Chrome/Firefox decode it as audible silence
+// and leave gaps when looping. We trim it from the decoded buffers for gapless
+// loops.
+//
+// We detect one shared trim window and apply it to every buffer of the track, so
+// they all come out the same length and stay sample-locked (each Tone.Player
+// loops at its own buffer length, so any per-stem length difference makes them
+// drift a little every loop — desktop only; Safari strips the padding natively).
+//
+// The window is the WIDEST musical extent across all the track's buffers: the
+// earliest detected onset and the LATEST detected offset. Detecting per-stem and
+// using only one buffer is unreliable — a sparse stem (Track 3 vocals, silent at
+// the loop ends) detects nothing and would leave its padding in, while a stem
+// with a quiet sustain/reverb tail (Track 9 keys) would get that tail clipped,
+// shortening the loop and slipping the timing. Taking the union instead means we
+// never trim past any stem's audio: silent edges simply don't vote.
 
 const SILENCE_THRESHOLD = 0.005; // Amplitude below this is "silence"
 const MIN_TRIM_SAMPLES = 64;     // Don't trim fewer than this
 
-function trimBuffer(audioBuffer) {
+// Find the padding trim points on one buffer by silence detection. Returns the
+// onset/offset sample indices plus whether each edge was actually detected — a
+// buffer that's silent at an edge (e.g. a sparse vocal) reports *Detected:false
+// so callers can ignore its vote on that edge.
+function detectTrimWindow(audioBuffer) {
+  const sampleRate = audioBuffer.sampleRate;
+  const length = audioBuffer.length;
+  const data = audioBuffer.getChannelData(0);
+
+  let start = 0, startDetected = false;
+  for (let i = 0; i < Math.min(length, sampleRate); i++) { // search max 1 second
+    if (Math.abs(data[i]) > SILENCE_THRESHOLD) {
+      start = Math.max(0, i - MIN_TRIM_SAMPLES); // keep a tiny buffer
+      startDetected = true;
+      break;
+    }
+  }
+
+  let end = length, endDetected = false;
+  for (let i = length - 1; i > Math.max(0, length - sampleRate); i--) { // search max 1 second
+    if (Math.abs(data[i]) > SILENCE_THRESHOLD) {
+      end = Math.min(length, i + MIN_TRIM_SAMPLES); // keep a tiny buffer
+      endDetected = true;
+      break;
+    }
+  }
+
+  return { start, startDetected, end, endDetected, length };
+}
+
+// Slice a buffer to [start, end), clamped to its own length so a stem that
+// decoded slightly differently can't read out of range. Returns the original
+// buffer unchanged if the window is the whole buffer (or degenerate).
+function sliceBuffer(audioBuffer, start, end) {
   const numChannels = audioBuffer.numberOfChannels;
   const sampleRate = audioBuffer.sampleRate;
   const length = audioBuffer.length;
 
-  // Find first non-silent sample
-  let trimStart = 0;
-  const firstChannel = audioBuffer.getChannelData(0);
-  for (let i = 0; i < Math.min(length, sampleRate); i++) { // Search max 1 second
-    if (Math.abs(firstChannel[i]) > SILENCE_THRESHOLD) {
-      trimStart = Math.max(0, i - MIN_TRIM_SAMPLES); // Keep a tiny buffer
-      break;
-    }
+  const s = Math.max(0, Math.min(start, length));
+  const e = Math.max(s, Math.min(end, length));
+  const trimmedLength = e - s;
+  if (trimmedLength <= 0 || trimmedLength === length) {
+    return audioBuffer; // nothing to trim
   }
 
-  // Find last non-silent sample
-  let trimEnd = length;
-  for (let i = length - 1; i > Math.max(0, length - sampleRate); i--) { // Search max 1 second
-    if (Math.abs(firstChannel[i]) > SILENCE_THRESHOLD) {
-      trimEnd = Math.min(length, i + MIN_TRIM_SAMPLES); // Keep a tiny buffer
-      break;
-    }
-  }
-
-  // Only trim if we found meaningful padding
-  if (trimStart < MIN_TRIM_SAMPLES && (length - trimEnd) < MIN_TRIM_SAMPLES) {
-    return audioBuffer; // No significant padding found
-  }
-
-  const trimmedLength = trimEnd - trimStart;
-  const trimmedBuffer = Tone.context.createBuffer(numChannels, trimmedLength, sampleRate);
-
+  const out = Tone.context.createBuffer(numChannels, trimmedLength, sampleRate);
   for (let ch = 0; ch < numChannels; ch++) {
-    const sourceData = audioBuffer.getChannelData(ch);
-    const targetData = trimmedBuffer.getChannelData(ch);
+    const src = audioBuffer.getChannelData(ch);
+    const dst = out.getChannelData(ch);
     for (let i = 0; i < trimmedLength; i++) {
-      targetData[i] = sourceData[trimStart + i];
+      dst[i] = src[s + i];
     }
   }
-
-  const trimmedMs = ((trimStart + (length - trimEnd)) / sampleRate * 1000).toFixed(1);
-  console.log(`Trimmed ${trimmedMs}ms of padding (start: ${trimStart}, end: ${length - trimEnd} samples)`);
-
-  return trimmedBuffer;
+  return out;
 }
 
 // --- Master Output Chain ---
@@ -210,13 +234,34 @@ export class StemPlayer {
     try {
       await Tone.loaded();
 
-      // Trim MP3 padding from all buffers for gapless looping
+      // Trim MP3 padding for gapless looping using the widest musical extent
+      // across all the track's buffers (see detectTrimWindow comment for the why).
       if (this.mainPlayer.buffer && this.mainPlayer.buffer.length > 0) {
-        this.mainPlayer.buffer = new Tone.ToneAudioBuffer(trimBuffer(this.mainPlayer.buffer.get()));
-      }
-      for (const [stemId, player] of Object.entries(this.stemPlayers)) {
-        if (player.buffer && player.buffer.length > 0) {
-          player.buffer = new Tone.ToneAudioBuffer(trimBuffer(player.buffer.get()));
+        const buffers = [this.mainPlayer.buffer.get()];
+        for (const player of Object.values(this.stemPlayers)) {
+          if (player.buffer && player.buffer.length > 0) buffers.push(player.buffer.get());
+        }
+
+        const fullLength = buffers[0].length;
+        let leadTrim = fullLength; // min of detected onsets
+        let tailEnd = 0;           // max of detected offsets
+        let anyStart = false, anyEnd = false;
+        for (const buf of buffers) {
+          const w = detectTrimWindow(buf);
+          if (w.startDetected) { leadTrim = Math.min(leadTrim, w.start); anyStart = true; }
+          if (w.endDetected)   { tailEnd = Math.max(tailEnd, w.end);     anyEnd = true; }
+        }
+        if (!anyStart) leadTrim = 0;        // nothing detected → don't trim the head
+        if (!anyEnd) tailEnd = fullLength;  // nothing detected → don't trim the tail
+
+        const trimmedMs = ((leadTrim + (fullLength - tailEnd)) / buffers[0].sampleRate * 1000).toFixed(1);
+        console.log(`Trim window (union of ${buffers.length} buffer(s)): start ${leadTrim}, end-trim ${fullLength - tailEnd} (${trimmedMs}ms)`);
+
+        this.mainPlayer.buffer = new Tone.ToneAudioBuffer(sliceBuffer(this.mainPlayer.buffer.get(), leadTrim, tailEnd));
+        for (const player of Object.values(this.stemPlayers)) {
+          if (player.buffer && player.buffer.length > 0) {
+            player.buffer = new Tone.ToneAudioBuffer(sliceBuffer(player.buffer.get(), leadTrim, tailEnd));
+          }
         }
       }
 
