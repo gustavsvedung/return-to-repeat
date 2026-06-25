@@ -788,3 +788,25 @@ export async function initAudioContext() {
     console.log('Audio context started');
   }
 }
+
+// Current AudioContext state ('running' | 'suspended' | 'interrupted' | 'closed').
+// iOS uses 'suspended' and the WebKit-specific 'interrupted' when the audio
+// session is taken away (device unplugged, another app grabs audio, etc.).
+export function getAudioContextState() {
+  return Tone.context.state;
+}
+
+// Subscribe to AudioContext state changes. iOS suspends the context on
+// interruption and never auto-resumes; main.js uses this to sync the UI to a
+// paused state so the next Play tap can resume it. Binds to the raw context
+// because Tone's wrapper doesn't reliably surface the iOS 'interrupted' state.
+export function onAudioContextStateChange(callback) {
+  const raw = Tone.context.rawContext || Tone.context;
+  const handler = () => callback(raw.state);
+  if (typeof raw.addEventListener === 'function') {
+    raw.addEventListener('statechange', handler);
+  } else if (typeof Tone.context.on === 'function') {
+    // Fallback to Tone's own emitter if no raw context is exposed
+    Tone.context.on('statechange', () => callback(Tone.context.state));
+  }
+}

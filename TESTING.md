@@ -43,12 +43,12 @@ bucket.
 - Tick a row in the **pass tracker** when you finish that whole pass.
 
 ## Pass tracker
-- [ ] macOS · Chrome — Core (smoke + console) + fast-skip
-- [ ] macOS · Firefox — Layout + Three 1 sync
-- [ ] macOS · Safari — Layout
-- [ ] iPhone 13 mini · Safari — **FULL** (Core + Audio paths + known issues)
-- [ ] iPad Air · Safari — Layout + interactive spot-check
-- [ ] iPhone · Firefox (AirPlay) + Chrome (quick) — shell spot-checks
+- [x] macOS · Chrome — Core (smoke + console) + fast-skip
+- [x] macOS · Firefox — Layout + Three 1 sync
+- [x] macOS · Safari — Layout
+- [x] iPhone 13 mini · Safari — **FULL** (Core + Audio paths + known issues)
+- [x] iPad Air · Safari — Layout + interactive spot-check
+- [x] iPhone · Firefox (AirPlay) + Chrome (quick) — shell spot-checks
 - [ ] Android · Chrome — Core + Layout *(if borrowed)*
 
 ---
@@ -149,4 +149,24 @@ playing through a mid-track output switch**.
 Drop anything new here as you go (device · browser · steps · reproducible?), then
 I'll triage into BUGS.md.
 
--
+- Album completions isn't counted. (macos chrome)
+- Audio is sometimes distorted when starting playback, but pressing next or shuffle loads new audio normal. Could be when you press next fast many times and then play right away.  (macos chrome)
+- Confirm bug three 1: frida vocal drifts out of sync with each play and gets worse every time. same with boy soprano vocal. (macos chrome)
+- Play button icon sometimes stuck with spinning load icon. Console says all audio loaded and trimmed. Need page reload to break it. Happens when pressing next fast while audio plays, going over locked track eleven. (macos chrome)
+- Omni 4/5 previous bug can't be recreated on macos chrome. fixed?
+- Player doesn't fill the screen vertically, it's "small screen" size. (macos firefox) Works on macos safari and chrome though.
+- Confirm bug three 1 (vocals drifting) (macos firefox)
+- Can't confirm bug three 1 (drifting vocals). Stem sync works. (ios safari)
+- Can't confirm bug omni 1 (no audio after app switch or lock screen) (ios safari)
+- Confirm loading freeze upon fast skipping across track eleven. (ios safari)
+- Confirm bug omni 2. Audio has some kind of digital distortion present on airplay speaker. Can't confirm it every time though, sometimes it works without any distortion. (ios safari & firefox)
+- Album completions seems counted. (ios safari)
+- Unplugging wired headphones (with apple dac dongle) while playing stops audio and freezes vu bar. Audio won't play until new track is loaded. Happens if audio is paused when unplugging as well (ios safari)
+- Confirm freeze issue when unplugging and casing airpods. Same with third-party bt headphones. Same with airplay to speaker. Got this message in console: "The AudioContext is 'suspended'. Invoke Tone.start() from a user action to start the audio.". This happens when turning devices off with a physical button (or put airpods back in case) but not when changing output in ios control center. (ios safari)
+- Same freeze behaviour when playing audio, switching to different ios app with sound (like youtube), then switching back again. BT headphones. (ios safari)
+- Many audio clicks and dropouts when casting to wireless speaker (macos chrome). 
+- Player doesn't fill the screen vertically, it's "small screen" size. This is on iPad Air M2 13". (ipados safari) 
+- NoSleep not working when connected to airplay speaker and audio playing (ios firefox)
+- Freeze bug confirmed when playing on airplay speaker and then turning speaker off by pressing off button on speaker (ios firefox)
+- Can't confirm bug three 1 (drifting vocals). Stem sync works. (ios firefox)
+- Can't confirm bug omni 1. audio resumes after returning from locked screen (ios firefox)

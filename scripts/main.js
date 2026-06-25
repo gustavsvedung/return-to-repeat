@@ -5,7 +5,7 @@
 
 import { tracks, getTrack } from './tracks.js';
 import { resolveSignals, initSession, setPreviousTrack } from './signals.js';
-import { StemPlayer, SamplePlayer, TrackPreloader, initAudioContext, getMeterLevel, setEffectIntensity } from './stem-player.js';
+import { StemPlayer, SamplePlayer, TrackPreloader, initAudioContext, getMeterLevel, setEffectIntensity, getAudioContextState, onAudioContextStateChange } from './stem-player.js';
 import {
   incrementVisitCount,
   incrementTrackPlayCount,
@@ -23,6 +23,11 @@ let currentVariation = null;
 let isPlaying = false;
 let isLoading = false;
 let loadGeneration = 0; // Increments on each load — used to cancel stale loads
+
+// Set when iOS suspends the audio context out from under us mid-playback
+// (device unplugged, another app grabs audio, screen sleeps). We pause the UI
+// honestly and use this to attempt a resume when the page becomes visible again.
+let audioInterruptedWhilePlaying = false;
 
 let stemPlayer = null;
 let samplePlayer = null;
@@ -88,6 +93,18 @@ document.addEventListener('DOMContentLoaded', () => {
     creditsTrigger.addEventListener('click', () => setCreditsOpen(true));
     creditsOverlay.addEventListener('click', () => setCreditsOpen(false));
   }
+
+  // Fix 2: iOS suspends the audio context on interruption and never auto-resumes.
+  // When that happens mid-playback, sync the UI to a paused state so the next Play
+  // tap can resume it (initAudioContext in togglePlayback does the actual resume).
+  onAudioContextStateChange((state) => {
+    if (state !== 'running') handleAudioInterrupted();
+  });
+
+  // Fix 3: best-effort auto-resume when returning to the page after an interruption.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') resumeAfterInterruption();
+  });
 
   console.log('Return to Repeat initialized');
   debugStorage();
@@ -272,6 +289,7 @@ async function loadAndPlayTrack(trackIndex) {
     applyControlIntent(stemPlayer);
     stemPlayer.start();
     isPlaying = true;
+    audioInterruptedWhilePlaying = false;
     updatePlayButton();
     startVuMeter();
 
@@ -307,6 +325,10 @@ async function togglePlayback() {
     stopListenTimer();
     stopVuMeter();
   } else {
+    // The context may have been suspended by iOS while paused (interruption,
+    // device unplugged, app switch). This Play tap is a user gesture, so we can
+    // resume it here — without this, start() runs on a dead context (silence).
+    await initAudioContext();
     // Apply any control changes made while paused, then fade in on resume
     applyControlIntent(stemPlayer);
     stemPlayer.start(true);
@@ -314,6 +336,8 @@ async function togglePlayback() {
     startListenTimer(tracks[currentTrackIndex].id);
     startVuMeter();
   }
+  // Manual play/pause overrides any pending interruption auto-resume.
+  audioInterruptedWhilePlaying = false;
   isPlaying = !isPlaying;
   updatePlayButton();
 }
@@ -322,6 +346,46 @@ function updatePlayButton() {
   const icon = playButton.querySelector('.btn-icon');
   if (icon) {
     icon.className = isPlaying ? 'fa-solid fa-pause btn-icon' : 'fa-solid fa-play btn-icon';
+  }
+}
+
+// --- Audio interruption handling (iOS suspends the context on interruption) ---
+
+// Called when the audio context leaves 'running' while we believe we're playing.
+// The audio is already dead, so we don't touch the engine — just sync the UI to a
+// clean paused state. Without this the VU bar freezes and the play icon stays on
+// "pause", so the next tap only toggles the stuck state (the old "Play does nothing").
+function handleAudioInterrupted() {
+  if (!isPlaying) return;
+  audioInterruptedWhilePlaying = true;
+  isPlaying = false;
+  stopVuMeter();
+  stopListenTimer();
+  if (noSleep) noSleep.disable();
+  updatePlayButton();
+  console.log('Audio context interrupted — paused; tap Play to resume');
+}
+
+// Best-effort auto-resume when the page becomes visible again after an
+// interruption. Reliable on desktop/Android; iOS usually refuses a gestureless
+// resume, in which case this no-ops and the user's next Play tap recovers it
+// (via initAudioContext in togglePlayback). Guarded so it never throws.
+async function resumeAfterInterruption() {
+  if (!audioInterruptedWhilePlaying || isPlaying || !stemPlayer) return;
+  try {
+    await initAudioContext();
+    if (getAudioContextState() !== 'running') return; // iOS blocked it — wait for a tap
+    applyControlIntent(stemPlayer);
+    stemPlayer.start(true);
+    isPlaying = true;
+    audioInterruptedWhilePlaying = false;
+    if (noSleep) noSleep.enable();
+    startListenTimer(tracks[currentTrackIndex].id);
+    startVuMeter();
+    updatePlayButton();
+  } catch (err) {
+    // Resume rejected (typically iOS without a gesture) — leave it paused.
+    console.log('Auto-resume after interruption not permitted; awaiting Play tap');
   }
 }
 
