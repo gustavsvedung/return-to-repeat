@@ -1104,8 +1104,11 @@ function startListenTimer(trackId) {
     // Add a second of listen time
     const totalTime = addTrackListenTime(trackId, 1);
 
-    // Check if we just crossed the threshold
-    if (totalTime === THRESHOLD_SECONDS && !isTrackHeardInCycle(trackId)) {
+    // Check if we've crossed the threshold. Use >= (not ===) so a skipped
+    // timer tick (e.g. background-tab throttling jumping 59→61) can't step over
+    // the exact boundary and never register. The isTrackHeardInCycle guard keeps
+    // it firing only once — the handler marks the track heard.
+    if (totalTime >= THRESHOLD_SECONDS && !isTrackHeardInCycle(trackId)) {
       const result = onTrackListenThresholdReached(trackId);
       if (result.albumCompleted) {
         console.log(`Album completed! Total: ${result.totalCompletions}`);

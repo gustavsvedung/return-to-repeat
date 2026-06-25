@@ -21,7 +21,7 @@ most of the alarming entries. Suggested fix order:
 
 1. ~~**A — AudioContext resume on interruption**~~ ✅ **DONE & verified** (cleared 5+ findings + Omni 1)
 2. ~~**B — Fast-skip / Track 11 loading-state race + cold-start distortion**~~ ✅ **DONE & verified** (spinner + start distortion + Omni 4/5)
-3. **D — Album-completion `>= 60` hardening** (trivial; do while nearby)
+3. ~~**D — Album-completion `>= 60` hardening**~~ ✅ **DONE** (trivial robustness fix)
 4. **C — Three 1 vocal drift** (investigate audio files first; likely a re-export)
 5. **F — Layout scale-up on large viewports** (low; design/CSS polish)
 6. **E — AirPlay/Cast quality** (likely platform; document, maybe mitigate)
@@ -149,9 +149,9 @@ A completion needs **60 s of listen time on each of tracks 1–10 in one cycle**
 **no visible feedback** (console only). "Not counted" on macOS Chrome was skip-testing
 never satisfying that; it **does** count on iOS with natural listening. Mechanism is fine.
 
-- [ ] **Real latent fragility:** the threshold fires on `totalTime === 60` exact equality
-  (`main.js` ~line 1041). A skipped timer tick (background-tab throttling) jumps 59→61
-  and the completion **never fires**. Harden to `>= 60` (guard already checks `!isTrackHeardInCycle`).
+- [x] **Real latent fragility — FIXED (2026-06-25):** the threshold fired on `totalTime === 60`
+  exact equality. A skipped timer tick (background-tab throttling) jumps 59→61 and the
+  completion **never fired**. Now `>= 60`; the `!isTrackHeardInCycle` guard keeps it firing once.
 - Design Q (below): should a completion give the listener any visible acknowledgment?
 
 ### E. AirPlay / Cast audio quality — **LOW (likely platform / won't-fix)**
