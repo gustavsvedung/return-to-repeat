@@ -134,16 +134,20 @@ export function resetCurrentListenCycle() {
 }
 
 /**
- * Check if all tracks 1-10 have been heard in current cycle
+ * Check if a cycle counts as an album completion: at least 8 of tracks 1-10
+ * heard. The two-track slack forgives personal taste — a dedicated listener with
+ * an aversion to a track or two can still earn the unlock — while distinct-track
+ * breadth keeps it cheat-proof (idle/looping one track can't fake a completion).
  */
+const TRACKS_REQUIRED_FOR_COMPLETION = 8;
+
 export function isAlbumCompleteInCycle() {
   const cycle = getCurrentListenCycle();
+  let heard = 0;
   for (let i = 1; i <= 10; i++) {
-    if (!cycle[String(i)]) {
-      return false;
-    }
+    if (cycle[String(i)]) heard++;
   }
-  return true;
+  return heard >= TRACKS_REQUIRED_FOR_COMPLETION;
 }
 
 /**

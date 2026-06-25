@@ -595,7 +595,9 @@ This approach:
    → Mark track as "heard" in rtr_currentListenCycle
            │
            ▼
-4. When all 10 tracks (1-10) marked as heard
+4. When at least 8 of tracks 1-10 marked as heard
+   (two-track slack forgives a personal aversion; distinct-track
+    breadth keeps it cheat-proof — idle/looping can't fake it)
    → Increment rtr_albumCompletions
    → Clear rtr_currentListenCycle for next album cycle
            │
