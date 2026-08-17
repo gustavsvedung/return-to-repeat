@@ -671,6 +671,39 @@ footer p {
     }
 }
 
+/* Large, tall viewports (iPad portrait, big desktop windows): scale the whole
+   card up instead of leaving it phone-sized in a field of dead space. On iPad
+   Air 13" portrait the 380x780 card used only 60% of the height with 440px
+   empty below it, while landscape looked right — the proportions were already
+   correct, there was just too little of them.
+
+   zoom, not transform: scale(). zoom scales layout, so hit-testing, the fader
+   drag maths and the fixed credits backdrop all keep working; a transform would
+   make .container the containing block for the position:fixed backdrop and
+   shrink it to the card. Unsupported zoom degrades to the compact layout.
+
+   The card plus its 80px top offset both scale, so the footprint is 860 * zoom.
+   Each step stays comfortably inside its own breakpoint so the bottom of the
+   card can never be clipped by the overflow:hidden body — Safari's toolbar
+   eats into the viewport and the steps have to survive that. */
+@media (min-width: 768px) and (min-height: 1100px) {
+    .container {
+        zoom: 1.2;   /* 1032px of 1100 */
+    }
+}
+
+@media (min-width: 768px) and (min-height: 1250px) {
+    .container {
+        zoom: 1.35;  /* 1161px of 1250 — the iPad Air 13" portrait case */
+    }
+}
+
+@media (min-width: 768px) and (min-height: 1400px) {
+    .container {
+        zoom: 1.5;   /* 1290px of 1400 */
+    }
+}
+
 /* === Light UI mode (dark track backgrounds) === */
 
 .container.light-ui {

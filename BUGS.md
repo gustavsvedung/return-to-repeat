@@ -23,7 +23,7 @@ most of the alarming entries. Suggested fix order:
 2. ~~**B — Fast-skip / Track 11 loading-state race + cold-start distortion**~~ ✅ **DONE & verified** (spinner + start distortion + Omni 4/5)
 3. ~~**D — Album-completion `>= 60` hardening**~~ ✅ **DONE** (trivial robustness fix)
 4. ~~**C — Three 1 vocal drift**~~ ✅ **DONE & verified** (trim-logic fix; files were pristine — no re-export)
-5. **F — Layout scale-up on large viewports** (low; design/CSS polish)
+5. ~~**F — Layout scale-up on large viewports**~~ ✅ **DONE & verified** (stepped `zoom` on the card)
 6. ~~**E — AirPlay/Cast quality**~~ ✅ **DONE & verified** (AirPlay: context pinned to 44.1 kHz;
    Chromecast dropouts still to re-test)
 
@@ -250,7 +250,7 @@ exposes no route-change event (a reroute isn't an interruption — see A), so it
 latency-polling heuristic plus re-creating the context and players mid-playback. Far too much
 surgery for what's left of this issue.
 
-### F. Layout — iPad portrait renders compact — **LOW (design/CSS polish)**
+### F. Layout — iPad portrait renders compact — **[x] FIXED & verified on macOS Chrome (2026-08-17)**
 
 Not a rendering bug. ~~Firefox desktop~~ was just **80 % browser zoom** — at 100 % it
 renders large, **resolved, no code needed.** The remaining case is **iPad Air 13",
@@ -258,9 +258,32 @@ portrait only**: landscape renders large and looks good, portrait lands on the c
 layout (title/controls small, dead space below). Sizing keys off the tall-narrow
 viewport (fits the `max-height` cap), not the engine.
 
-- [ ] Make iPad **portrait** render at the large size (scale up the card on tall-narrow
-  viewports). Needs CSS investigation. Low priority. Partly mooted if we lock orientation
-  (see orientation note in Design decisions) — though iPad landscape is fine to keep.
+**Measured:** at 1024x1300 the 380x780 card used **60 % of the height with 440 px empty
+below it**. The proportions were already right — there was just too little of them. So the
+fix scales the whole card rather than restyling any part of it.
+
+**Fix landed** (`styles.css`): `zoom` on `.container`, in three steps gated on
+`min-width: 768px` plus viewport height — **1.2** from 1100 px, **1.35** from 1250 px
+(the iPad Air 13" portrait case), **1.5** from 1400 px.
+
+- **`zoom`, not `transform: scale()`.** zoom scales layout, so hit-testing, the fader drag
+  maths and the `position: fixed` credits backdrop keep working. A transform would make
+  `.container` the containing block for that backdrop and shrink it to the card.
+  Where `zoom` is unsupported it simply degrades to the compact layout.
+- **Why stepped, not one factor:** the card *and* its 80 px top offset both scale, so the
+  footprint is `860 * zoom`. Each step stays well inside its breakpoint (1032/1100,
+  1161/1250, 1290/1400) so the card can't be clipped by the `overflow: hidden` body when
+  Safari's toolbar eats into the viewport.
+
+**Verified on macOS Chrome:** correct zoom and no clipping at 1150 / 1300 / 1450 px tall;
+**unchanged** at iPad landscape (1366x930), narrow-tall (700x1300) and phone (375x812).
+Credits backdrop still covers the full viewport and the window still centres on the card;
+Track 7's faders return exactly the value aimed at; Track 5's strip resolves every button
+and slides correctly.
+
+**Observation, not acted on:** `max-height: 780px` also caps the card on phones *taller*
+than 780 px of viewport (iPhone 13 mini is ~712 px so it fills; a 14 Pro Max would leave
+~50 px). Pre-existing, unrelated to this fix, and needs a real device to judge.
 
 ### Orientation lock (folds into the PWA step)
 
@@ -284,7 +307,7 @@ How it can actually be done:
   moment playback starts (via a `trackControlIntent` layer in main.js). Clicking
   does **not** auto-start playback. One-shot flutes (T5) stay a no-op until play
   (nothing stateful to remember). Implemented; verify in testing.
-- [ ] **Large-viewport layout (iPad 13" / desktop).** The compact, top-anchored card is
-  deliberate and looks right on the phone (the hero device); the large screens just leave
-  dead space. Decision pending: scale up (see F) vs leave as-is for v1. Gustav leans
-  scale-up but flags it as low priority.
+- [x] **Large-viewport layout (iPad 13" / desktop).** DECIDED: **scale up.** The compact,
+  top-anchored card is deliberate and looks right on the phone (the hero device); the large
+  screens just left dead space. Implemented in F as a stepped `zoom` on the card, so the
+  phone layout and iPad landscape are untouched and only tall large viewports change.

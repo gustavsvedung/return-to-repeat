@@ -71,7 +71,8 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
 - **E** — AirPlay distortion **fixed** (the AudioContext is pinned to 44.1 kHz, so switching
   output to AirPlay mid-playback no longer forces a live resample). Chromecast clicks still
   to re-test; iOS Firefox unchanged and not pursued.
-- **F** — iPad portrait renders compact (low-priority CSS).
+- **F** — iPad portrait **fixed** (the card scales up on tall large viewports); worth a look
+  on the actual iPad.
 - **PWA + orientation lock** — installable app; lock phones to portrait via the manifest.
 - Android smoke test (no device yet).
 
