@@ -54,19 +54,37 @@ const DEFAULT_SAMPLE_RATE = 44100;
     }
   }
 
+  // Build the pinned context with the constructor of Tone's *own* raw context,
+  // NOT `new AudioContext()`. Tone creates its contexts through
+  // standardized-audio-context, which polyfills AudioParam methods that some
+  // engines lack — Firefox has no `cancelAndHoldAtTime`, which Tone's `rampTo`
+  // calls on every fade. A plain native context skips that shim and playback
+  // throws on Firefox while staying silent (Chrome and Safari implement the
+  // method natively, so they never notice).
+  let candidate = null;
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    Tone.setContext(new Tone.Context(new AudioCtx({ sampleRate: rate, latencyHint: 'interactive' })));
-    const actual = Tone.getContext().sampleRate;
-    if (actual !== rate) {
-      console.warn(`AudioContext: browser refused ${rate} Hz, running at ${actual} Hz`);
-    } else {
-      console.log(`AudioContext pinned to ${actual} Hz`);
+    const RawContext = Tone.getContext().rawContext.constructor;
+    candidate = new RawContext({ sampleRate: rate, latencyHint: 'interactive' });
+
+    // Probe for the shim rather than trusting it: a context without it would
+    // take the whole player down, so we'd rather keep the default one and lose
+    // only the AirPlay behaviour.
+    if (typeof candidate.createGain().gain.cancelAndHoldAtTime !== 'function') {
+      throw new Error('pinned context is missing the AudioParam shim');
     }
   } catch (err) {
-    // Some engines reject an explicit sampleRate. Fall back to Tone's own
-    // context so playback still works — only the AirPlay behaviour regresses.
-    console.warn(`AudioContext: could not pin to ${rate} Hz, using the default context`, err);
+    console.warn(`AudioContext: could not pin to ${rate} Hz, keeping the default context`, err);
+    if (candidate && typeof candidate.close === 'function') candidate.close();
+    return;
+  }
+
+  // Adopt it last, so nothing above can leave us half-switched.
+  Tone.setContext(new Tone.Context(candidate));
+  const actual = Tone.getContext().sampleRate;
+  if (actual !== rate) {
+    console.warn(`AudioContext: browser refused ${rate} Hz, running at ${actual} Hz`);
+  } else {
+    console.log(`AudioContext pinned to ${actual} Hz`);
   }
 })();
 
