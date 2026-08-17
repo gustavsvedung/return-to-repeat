@@ -101,23 +101,42 @@ let masterLimiter = null;
 let masterMeter = null;
 let masterDistortion = null;
 let masterFilter = null;
+let masterOutputTrim = null;
+
+// Headroom for intersample peaks on resampling output paths (BUGS.md E).
+// The limiter's -0.1 dBFS ceiling holds for the *samples*, but a wireless route
+// (AirPlay, Chromecast) resamples 48 kHz → the receiver's rate and re-encodes.
+// Reconstructed peaks between samples then land above 0 dBFS and clip in the
+// receiver — heard as intermittent digital distortion, worst on peaky material.
+// A fixed trim after the meter buys that margin back. It sits after the meter so
+// the VU thresholds are unaffected, and after the limiter so the limiting
+// character is unchanged — this only lowers the final output level.
+const OUTPUT_TRIM_DB = -1;
+
+// Whether the master distortion currently runs with 4x oversampling. Only true
+// while Track 11's effect is audible (see setEffectIntensity).
+let effectOversampled = false;
 
 function getMasterLimiter() {
   if (!masterLimiter) {
-    // Audio chain: source → distortion → filter → limiter → meter → destination
+    // Audio chain: source → distortion → filter → limiter → meter → trim → destination
     // Distortion + lowpass approximates a bitcrusher / "destroyed audio" effect.
     // We use these (instead of Tone.BitCrusher) because they don't rely on
     // an AudioWorklet, which can have timing issues with initialization.
     masterMeter = new Tone.Meter({ smoothing: 0.65 });
-    masterDistortion = new Tone.Distortion({ distortion: 0.9, oversample: '4x' });
+    // Dry by default, so no oversampling until the effect is actually used
+    // (see setEffectIntensity — oversampling costs CPU even at wet = 0).
+    masterDistortion = new Tone.Distortion({ distortion: 0.9, oversample: 'none' });
     masterDistortion.wet.value = 0; // Start fully dry
     masterFilter = new Tone.Filter({ frequency: 22050, type: 'lowpass', Q: 1 });
     masterLimiter = new Tone.Limiter(-0.1);
+    masterOutputTrim = new Tone.Gain(OUTPUT_TRIM_DB, 'decibels');
 
     masterDistortion.connect(masterFilter);
     masterFilter.connect(masterLimiter);
     masterLimiter.connect(masterMeter);
-    masterMeter.toDestination();
+    masterMeter.connect(masterOutputTrim);
+    masterOutputTrim.toDestination();
   }
   // Sources connect to the distortion node (top of chain)
   return masterDistortion;
@@ -140,6 +159,17 @@ export function getMeterLevel() {
  */
 export function setEffectIntensity(effect, intensity) {
   if (effect === 'bitcrusher' && masterDistortion && masterFilter) {
+    // The waveshaper processes audio even when the effect is fully dry, so 4x
+    // oversampling would cost CPU in the audio thread on every track — CPU that
+    // matters on a wireless output path, where underruns become clicks/dropouts
+    // (BUGS.md E). Enable it only while the effect is actually audible, and only
+    // on the transition: this runs per animation frame while the eel is held.
+    const wantsOversample = intensity > 0;
+    if (wantsOversample !== effectOversampled) {
+      effectOversampled = wantsOversample;
+      masterDistortion.oversample = wantsOversample ? '4x' : 'none';
+    }
+
     // Distortion wet: 0 (clean) → 1 (heavy distortion)
     masterDistortion.wet.value = intensity;
 

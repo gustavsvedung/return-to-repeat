@@ -24,7 +24,8 @@ most of the alarming entries. Suggested fix order:
 3. ~~**D — Album-completion `>= 60` hardening**~~ ✅ **DONE** (trivial robustness fix)
 4. ~~**C — Three 1 vocal drift**~~ ✅ **DONE & verified** (trim-logic fix; files were pristine — no re-export)
 5. **F — Layout scale-up on large viewports** (low; design/CSS polish)
-6. **E — AirPlay/Cast quality** (likely platform; document, maybe mitigate)
+6. ~~**E — AirPlay/Cast quality**~~ ⏳ **MITIGATED, awaiting device test** (output headroom +
+   no idle oversampling; the rest is platform resampling)
 
 **Didn't reproduce / safe (good news, recorded so we don't re-chase):**
 - Omni 1 from a *plain* lock screen — audio resumed (iOS Safari & Firefox). The real
@@ -164,13 +165,44 @@ never satisfying that; it **does** count on iOS with natural listening. Mechanis
   completion **never fired**. Now `>= 60`; the `!isTrackHeardInCycle` guard keeps it firing once.
 - Design Q (below): should a completion give the listener any visible acknowledgment?
 
-### E. AirPlay / Cast audio quality — **LOW (likely platform / won't-fix)**
+### E. AirPlay / Cast audio quality — **LOW — mitigations landed 2026-08-17, awaiting device test**
 
 - [ ] **[Omni 2] AirPlay digital distortion**, intermittent (iOS Safari & Firefox — sometimes
   clean). Spans both browsers → not engine-specific app logic.
 - [ ] **Chromecast clicks/dropouts** when casting from macOS Chrome to a wireless speaker.
-- Both are characteristic of **wireless resampling**. Plan: document as a platform limitation
-  unless investigation shows our buffer sizing makes it worse.
+- Both are characteristic of **wireless resampling**. Mostly platform, but two things on our
+  side plausibly made it worse, and both are now fixed (`stem-player.js`):
+
+**1. No headroom for intersample peaks (the distortion suspect).** The chain ended on
+`Tone.Limiter(-0.1)` → destination. A −0.1 dBFS ceiling holds for the *samples*, but the
+wireless path resamples 48 kHz → the receiver's rate and re-encodes; peaks reconstructed
+*between* samples then land above 0 dBFS and clip **in the receiver**. That matches the
+symptom exactly, including why it's intermittent (only peaky passages) and why it spans
+both iOS browsers. Fix: a fixed **−1 dB output trim** (`OUTPUT_TRIM_DB`) after the meter.
+Placed after the limiter so the limiting character is untouched, and after the meter so the
+VU thresholds are unchanged — it only lowers the final output level, inaudibly.
+
+**2. Constant 4x oversampling in the audio thread (the dropout suspect).** The master
+`Tone.Distortion` was built with `oversample: '4x'`, and a waveshaper processes audio even
+at `wet = 0` — so every track paid for oversampling that only Track 11's eel button ever
+uses. Fix: build it with `oversample: 'none'` and switch to `4x` only while intensity > 0,
+on the transition (`setEffectIntensity` runs per animation frame while the eel is held).
+The switch happens while wet is 0, so it can't be heard. Less audio-thread CPU means fewer
+underruns, which is what clicks/dropouts on a cast route are.
+
+**Deliberately NOT changed: `latencyHint`.** A bigger buffer (`playback`) is the textbook
+cure for wireless dropouts, but Tone's default `interactive` is what makes Track 5's
+hold-to-play flutes feel immediate. Wrong trade for this album — revisit only if the two
+fixes above prove insufficient *and* dropouts turn out to matter more than flute latency.
+
+**Verified on macOS Chrome (2026-08-17):** audio reaches the destination normally, VU
+unaffected, Track 11's effect still engages and releases cleanly (measured −14.8 dB dry →
+−32.7 dB held → back after release), no console errors.
+
+**Still needs a device test (Gustav):** play on the **AirPlay speaker** and on the
+**Chromecast** and listen for the old distortion/clicks. If it's gone, close E. If it
+persists unchanged, it's the platform's resampler and E becomes a documented limitation —
+nothing further to try short of the latency trade above.
 
 ### F. Layout — iPad portrait renders compact — **LOW (design/CSS polish)**
 

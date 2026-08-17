@@ -59,7 +59,7 @@ img/                  control icons (bird, cat, horse, eel)
   be public; private Pages needs GitHub Pro.) Kept private during development so the
   MP3s aren't trivially scrapable until release.
 
-## Status (2026-06-25)
+## Status (2026-08-17)
 
 Post-launch-prep bug pass complete. All playback-affecting bugs are fixed and
 device-verified (AudioContext interruption recovery, fast-skip/Track 11 loading race,
@@ -68,7 +68,9 @@ tweak (a completion now forgives up to two skipped tracks). Full history and the
 remaining open items live in **[BUGS.md](BUGS.md)**.
 
 **Still open / planned:**
-- **E** — AirPlay/Cast audio quality (likely a platform resampling limit; to document).
+- **E** — AirPlay/Cast audio quality: mitigated in code (1 dB output headroom for intersample
+  peaks, no oversampling while the master effect is idle); **awaiting a device test** on the
+  AirPlay speaker and Chromecast. Whatever remains is platform resampling.
 - **F** — iPad portrait renders compact (low-priority CSS).
 - **PWA + orientation lock** — installable app; lock phones to portrait via the manifest.
 - Android smoke test (no device yet).

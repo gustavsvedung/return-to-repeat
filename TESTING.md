@@ -141,6 +141,9 @@ playing through a mid-track output switch**.
 - [ ] **Omni 1** — Play, then **lock the iPhone (or switch apps) for ~30–60s**, return: does audio resume, or can you resume it? (Safari iOS). Watch console for AudioContext warnings.
 - [ ] **Omni 4 / 5** — Tap **Next very rapidly 5–6×**: does it overshoot/skip extra tracks, land on the wrong one, or stutter loading?
 - [ ] **Omni 2** — Play, then **AirPlay to a speaker/TV**: is the sound degraded? (flagged on Firefox iOS — compare with Safari iOS)
+- [ ] **Omni 2 retest after the E mitigations** (output headroom + no idle oversampling, 2026-08-17):
+  AirPlay speaker *and* Chromecast, on peaky material — gone, better, or unchanged? Unchanged
+  means it's the platform resampler and E closes as a documented limitation.
 - [ ] **Three 1** — Play **Track 3** and let it **loop several times**: does the Frida vocal drift out of sync with the kalimba (worsening each loop)? Do the boy-soprano stems stay aligned? (Firefox macOS first)
 
 ---
