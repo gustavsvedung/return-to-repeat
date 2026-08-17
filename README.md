@@ -68,9 +68,9 @@ tweak (a completion now forgives up to two skipped tracks). Full history and the
 remaining open items live in **[BUGS.md](BUGS.md)**.
 
 **Still open / planned:**
-- **E** — AirPlay/Cast audio quality: mitigated in code (1 dB output headroom for intersample
-  peaks, no oversampling while the master effect is idle); **awaiting a device test** on the
-  AirPlay speaker and Chromecast. Whatever remains is platform resampling.
+- **E** — AirPlay distortion **fixed** (the AudioContext is pinned to 44.1 kHz, so switching
+  output to AirPlay mid-playback no longer forces a live resample). Chromecast clicks still
+  to re-test; iOS Firefox unchanged and not pursued.
 - **F** — iPad portrait renders compact (low-priority CSS).
 - **PWA + orientation lock** — installable app; lock phones to portrait via the manifest.
 - Android smoke test (no device yet).

@@ -75,7 +75,7 @@ bucket.
   | `completions=N` | Set album completions | Track 11 lock tease (0–4) / unlock (5) |
   | `unlock11=1` | Force-unlock Track 11 | Track 11 unlocked state |
   | `variation=X` | Force a specific variation | Any track |
-  | `sr=44100` | Pin the AudioContext sample rate | AirPlay route-change distortion (BUGS.md E) |
+  | `sr=48000` / `sr=native` | Override the 44.1 kHz context pin | AirPlay route-change distortion (BUGS.md E) |
 
   Active overrides print to the console (`🛠️ Debug overrides active`).
 

@@ -24,8 +24,8 @@ most of the alarming entries. Suggested fix order:
 3. ~~**D — Album-completion `>= 60` hardening**~~ ✅ **DONE** (trivial robustness fix)
 4. ~~**C — Three 1 vocal drift**~~ ✅ **DONE & verified** (trim-logic fix; files were pristine — no re-export)
 5. **F — Layout scale-up on large viewports** (low; design/CSS polish)
-6. ~~**E — AirPlay/Cast quality**~~ ⏳ **MITIGATED, awaiting device test** (output headroom +
-   no idle oversampling; the rest is platform resampling)
+6. ~~**E — AirPlay/Cast quality**~~ ✅ **DONE & verified** (AirPlay: context pinned to 44.1 kHz;
+   Chromecast dropouts still to re-test)
 
 **Didn't reproduce / safe (good news, recorded so we don't re-chase):**
 - Omni 1 from a *plain* lock screen — audio resumed (iOS Safari & Firefox). The real
@@ -165,7 +165,7 @@ never satisfying that; it **does** count on iOS with natural listening. Mechanis
   completion **never fired**. Now `>= 60`; the `!isTrackHeardInCycle` guard keeps it firing once.
 - Design Q (below): should a completion give the listener any visible acknowledgment?
 
-### E. AirPlay / Cast audio quality — **LOW — mitigations landed 2026-08-17, awaiting device test**
+### E. AirPlay / Cast audio quality — **[x] FIXED & verified on iPhone (2026-08-17)** — AirPlay; Chromecast still to re-test
 
 - [ ] **[Omni 2] AirPlay digital distortion**, intermittent (iOS Safari & Firefox — sometimes
   clean). Spans both browsers → not engine-specific app logic.
@@ -218,19 +218,37 @@ where the speaker was connected before load.
 **Still to test (Chromecast):** the macOS Chrome clicks/dropouts are a separate symptom
 (underruns, not resampling grit) and haven't been re-tested since the oversampling change.
 
-**Options, in order of appetite:**
-1. **Pin the context to 44.1 kHz** so it matches AirPlay natively and never needs a live SRC.
-   **Now testable via `?sr=44100`** (debug param, no-op without it). Cost: the phone's own
-   48 kHz output then gets a CoreAudio resample instead — normal for iOS audio (Apple Music
-   is 44.1), but it touches the *primary* listening path, so it needs its own A/B on
-   headphones. Doesn't remove the audio-unit reconfiguration, only the rate mismatch, so it
-   may only half-help.
-2. **Rebuild the audio graph on route change.** The real fix, but iOS exposes no route-change
-   event (a reroute isn't an interruption — see A), so it needs a latency-polling heuristic
-   plus re-creating the context and players mid-playback. Too much surgery for a LOW issue at
-   this stage.
-3. **Document it.** "Connect your speaker before loading" is a one-line reality, and reloading
-   the page after switching output already fixes it for free.
+**`?sr=44100` result (iPhone, 2026-08-17) — the rate match is the fix, on Safari:**
+- **iOS Safari:** load on the phone's own output, play, switch to AirPlay mid-playback →
+  **clean with `?sr=44100`, gritty without.** Confirms the mechanism above.
+- **iOS Firefox:** no change either way. Most likely the param never takes effect — Firefox
+  iOS is WebKit in a WKWebView with its own audio-session configuration, which may refuse an
+  explicit rate. The console would say so, but Firefox iOS can't be inspected from the Mac.
+  Same shell that already fails NoSleep over AirPlay; treated as a second-class path.
+
+**Fix landed: the context is now pinned to 44.1 kHz** (`DEFAULT_SAMPLE_RATE`, `stem-player.js`)
+— the native rate of AirPlay receivers and of Bluetooth AAC, so it matches however and
+whenever the listener connects. `?sr=48000` or `?sr=native` restore the old behaviour for
+comparison.
+
+**Cost, weighed and accepted:** the phone's own 48 kHz output now gets an OS resample — the
+same conversion iOS runs for every 44.1 kHz file it plays. A/B'd on HD 600s through the Apple
+DAC on tracks 3, 4 and 5: an initial impression of track 3 sounding slightly duller did not
+hold up on the other two and could not be confirmed. Gustav's call: a repeatable, plainly
+audible AirPlay fault outweighs an artefact that couldn't be confirmed by ear.
+
+**Verified on macOS Chrome:** default context reports 44100 Hz, playback and track changes
+work, and Track 3's five-buffer union trim comes out at 59.0 ms — matching the 59.3 ms
+measured at 48 kHz in C, so the sample-lock logic is rate-agnostic. `?sr=48000` and
+`?sr=native` both return 48000 Hz.
+
+**Residual — iOS Firefox unchanged (won't fix).** See the note above: the pin appears not to
+take effect there at all. Minority shell, already second-class for NoSleep over AirPlay.
+
+**Not pursued: rebuilding the audio graph on route change.** Would handle every case, but iOS
+exposes no route-change event (a reroute isn't an interruption — see A), so it needs a
+latency-polling heuristic plus re-creating the context and players mid-playback. Far too much
+surgery for what's left of this issue.
 
 ### F. Layout — iPad portrait renders compact — **LOW (design/CSS polish)**
 

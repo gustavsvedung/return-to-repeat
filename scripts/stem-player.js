@@ -17,42 +17,56 @@
 
 const AUDIO_PATH = 'audio/';
 
-// --- Debug: force the AudioContext sample rate (?sr=44100) ---
-// An AudioContext's sample rate is fixed at creation and normally follows the
-// output device that happens to be active at that moment. That's the trigger
-// behind BUGS.md E: load on the phone's own output (48 kHz) and switch to
-// AirPlay (44.1 kHz) afterwards, and iOS has to resample the live stream —
-// which is when it distorts. Loading with AirPlay already connected is clean.
+// --- AudioContext sample rate ---
+// An AudioContext's sample rate is fixed at creation and otherwise follows
+// whichever output device happens to be active at that moment. That was the
+// trigger behind BUGS.md E: load on the phone's own output (48 kHz) and switch
+// to AirPlay (44.1 kHz) afterwards, and iOS has to resample the live stream —
+// which is when it distorted. Loading with AirPlay already connected was clean.
 //
-// ?sr=44100 pins the context instead, so it matches AirPlay natively no matter
-// when the speaker is connected. Debug-only for now: we need to hear whether the
-// rate match alone is enough before making it the default, since pinning also
-// means the phone's own 48 kHz output gets resampled by the OS instead.
+// So we pin the context to 44.1 kHz instead: the native rate of AirPlay
+// receivers and of Bluetooth AAC, matched no matter when the listener connects.
+// The trade is that the phone's own 48 kHz output now gets resampled by the OS —
+// the same conversion iOS performs for every 44.1 kHz file it plays. Verified by
+// listening on HD 600s through the Apple DAC: no reliably audible difference,
+// while the AirPlay fault is plainly audible (iPhone, 2026-08-17).
 //
-// Runs at module load, before any Tone node is created, and is a complete no-op
-// without the param — the default path is untouched.
-(function applyDebugSampleRate() {
-  const raw = new URLSearchParams(window.location.search).get('sr');
-  if (!raw) return;
+// ?sr=48000 (or any rate) overrides it, and ?sr=native skips pinning entirely
+// and keeps whatever Tone's own context picked — both there for A/B comparison.
+//
+// Runs at module load, before any Tone node is created.
+const DEFAULT_SAMPLE_RATE = 44100;
 
-  const rate = parseInt(raw, 10);
-  if (!Number.isFinite(rate) || rate < 8000 || rate > 192000) {
-    console.warn(`🛠️ Debug: ignoring invalid ?sr=${raw}`);
+(function pinSampleRate() {
+  const param = new URLSearchParams(window.location.search).get('sr');
+  if (param === 'native') {
+    console.log('🛠️ Debug: sample rate left native — using Tone\'s own context');
     return;
+  }
+
+  let rate = DEFAULT_SAMPLE_RATE;
+  if (param) {
+    const requested = parseInt(param, 10);
+    if (Number.isFinite(requested) && requested >= 8000 && requested <= 192000) {
+      rate = requested;
+    } else {
+      console.warn(`🛠️ Debug: ignoring invalid ?sr=${param} — using ${rate} Hz`);
+    }
   }
 
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     Tone.setContext(new Tone.Context(new AudioCtx({ sampleRate: rate, latencyHint: 'interactive' })));
     const actual = Tone.getContext().sampleRate;
-    console.log(
-      `🛠️ Debug: AudioContext pinned to ${actual} Hz (requested ${rate})` +
-      (actual === rate ? '' : ' — browser refused the requested rate')
-    );
+    if (actual !== rate) {
+      console.warn(`AudioContext: browser refused ${rate} Hz, running at ${actual} Hz`);
+    } else {
+      console.log(`AudioContext pinned to ${actual} Hz`);
+    }
   } catch (err) {
-    // Older WebKit can reject an explicit sampleRate; fall back to Tone's own
-    // context so the player still works normally.
-    console.warn(`🛠️ Debug: could not pin sample rate to ${rate} Hz — using the default context`, err);
+    // Some engines reject an explicit sampleRate. Fall back to Tone's own
+    // context so playback still works — only the AirPlay behaviour regresses.
+    console.warn(`AudioContext: could not pin to ${rate} Hz, using the default context`, err);
   }
 })();
 
