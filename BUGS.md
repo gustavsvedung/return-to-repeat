@@ -199,10 +199,38 @@ fixes above prove insufficient *and* dropouts turn out to matter more than flute
 unaffected, Track 11's effect still engages and releases cleanly (measured −14.8 dB dry →
 −32.7 dB held → back after release), no console errors.
 
-**Still needs a device test (Gustav):** play on the **AirPlay speaker** and on the
-**Chromecast** and listen for the old distortion/clicks. If it's gone, close E. If it
-persists unchanged, it's the platform's resampler and E becomes a documented limitation —
-nothing further to try short of the latency trade above.
+**AirPlay A/B result (iPhone, 2026-08-17) — trigger identified, and it isn't peaks.**
+Old build vs. new build sounded the same; what *does* decide it is **when** the route is
+connected:
+
+- Already on AirPlay when the page loads → **clean**.
+- Load first, then switch the iPhone's output to AirPlay → **distorts**.
+- Identical on both git versions, so neither E mitigation addresses it.
+
+**Root cause:** an `AudioContext`'s sample rate is fixed at creation and can't be changed.
+Loading while AirPlay is active creates the context at the receiver's rate (44.1 kHz for
+practically all AirPlay devices) — matched, clean. Loading on the phone's own output creates
+it at 48 kHz, and a later switch to AirPlay leaves a 48 kHz context feeding a 44.1 kHz
+destination: iOS must resample the live stream and reconfigure the audio unit mid-flight,
+which is what we hear. Also explains the original "sometimes clean" — that was the sessions
+where the speaker was connected before load.
+
+**Still to test (Chromecast):** the macOS Chrome clicks/dropouts are a separate symptom
+(underruns, not resampling grit) and haven't been re-tested since the oversampling change.
+
+**Options, in order of appetite:**
+1. **Pin the context to 44.1 kHz** so it matches AirPlay natively and never needs a live SRC.
+   **Now testable via `?sr=44100`** (debug param, no-op without it). Cost: the phone's own
+   48 kHz output then gets a CoreAudio resample instead — normal for iOS audio (Apple Music
+   is 44.1), but it touches the *primary* listening path, so it needs its own A/B on
+   headphones. Doesn't remove the audio-unit reconfiguration, only the rate mismatch, so it
+   may only half-help.
+2. **Rebuild the audio graph on route change.** The real fix, but iOS exposes no route-change
+   event (a reroute isn't an interruption — see A), so it needs a latency-polling heuristic
+   plus re-creating the context and players mid-playback. Too much surgery for a LOW issue at
+   this stage.
+3. **Document it.** "Connect your speaker before loading" is a one-line reality, and reloading
+   the page after switching output already fixes it for free.
 
 ### F. Layout — iPad portrait renders compact — **LOW (design/CSS polish)**
 

@@ -17,6 +17,45 @@
 
 const AUDIO_PATH = 'audio/';
 
+// --- Debug: force the AudioContext sample rate (?sr=44100) ---
+// An AudioContext's sample rate is fixed at creation and normally follows the
+// output device that happens to be active at that moment. That's the trigger
+// behind BUGS.md E: load on the phone's own output (48 kHz) and switch to
+// AirPlay (44.1 kHz) afterwards, and iOS has to resample the live stream —
+// which is when it distorts. Loading with AirPlay already connected is clean.
+//
+// ?sr=44100 pins the context instead, so it matches AirPlay natively no matter
+// when the speaker is connected. Debug-only for now: we need to hear whether the
+// rate match alone is enough before making it the default, since pinning also
+// means the phone's own 48 kHz output gets resampled by the OS instead.
+//
+// Runs at module load, before any Tone node is created, and is a complete no-op
+// without the param — the default path is untouched.
+(function applyDebugSampleRate() {
+  const raw = new URLSearchParams(window.location.search).get('sr');
+  if (!raw) return;
+
+  const rate = parseInt(raw, 10);
+  if (!Number.isFinite(rate) || rate < 8000 || rate > 192000) {
+    console.warn(`🛠️ Debug: ignoring invalid ?sr=${raw}`);
+    return;
+  }
+
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    Tone.setContext(new Tone.Context(new AudioCtx({ sampleRate: rate, latencyHint: 'interactive' })));
+    const actual = Tone.getContext().sampleRate;
+    console.log(
+      `🛠️ Debug: AudioContext pinned to ${actual} Hz (requested ${rate})` +
+      (actual === rate ? '' : ' — browser refused the requested rate')
+    );
+  } catch (err) {
+    // Older WebKit can reject an explicit sampleRate; fall back to Tone's own
+    // context so the player still works normally.
+    console.warn(`🛠️ Debug: could not pin sample rate to ${rate} Hz — using the default context`, err);
+  }
+})();
+
 // --- MP3 Padding Trimming ---
 // MP3 files have encoder padding (~1152 samples at start, variable at end).
 // Safari strips it natively, but Chrome/Firefox decode it as audible silence
@@ -84,7 +123,10 @@ function sliceBuffer(audioBuffer, start, end) {
     return audioBuffer; // nothing to trim
   }
 
-  const out = Tone.context.createBuffer(numChannels, trimmedLength, sampleRate);
+  // Tone.getContext(), not Tone.context: the latter is a stale snapshot in the
+  // UMD build and keeps pointing at the context Tone made at load time, which is
+  // the wrong one whenever ?sr= has swapped it out.
+  const out = Tone.getContext().createBuffer(numChannels, trimmedLength, sampleRate);
   for (let ch = 0; ch < numChannels; ch++) {
     const src = audioBuffer.getChannelData(ch);
     const dst = out.getChannelData(ch);
@@ -101,42 +143,23 @@ let masterLimiter = null;
 let masterMeter = null;
 let masterDistortion = null;
 let masterFilter = null;
-let masterOutputTrim = null;
-
-// Headroom for intersample peaks on resampling output paths (BUGS.md E).
-// The limiter's -0.1 dBFS ceiling holds for the *samples*, but a wireless route
-// (AirPlay, Chromecast) resamples 48 kHz → the receiver's rate and re-encodes.
-// Reconstructed peaks between samples then land above 0 dBFS and clip in the
-// receiver — heard as intermittent digital distortion, worst on peaky material.
-// A fixed trim after the meter buys that margin back. It sits after the meter so
-// the VU thresholds are unaffected, and after the limiter so the limiting
-// character is unchanged — this only lowers the final output level.
-const OUTPUT_TRIM_DB = -1;
-
-// Whether the master distortion currently runs with 4x oversampling. Only true
-// while Track 11's effect is audible (see setEffectIntensity).
-let effectOversampled = false;
 
 function getMasterLimiter() {
   if (!masterLimiter) {
-    // Audio chain: source → distortion → filter → limiter → meter → trim → destination
+    // Audio chain: source → distortion → filter → limiter → meter → destination
     // Distortion + lowpass approximates a bitcrusher / "destroyed audio" effect.
     // We use these (instead of Tone.BitCrusher) because they don't rely on
     // an AudioWorklet, which can have timing issues with initialization.
     masterMeter = new Tone.Meter({ smoothing: 0.65 });
-    // Dry by default, so no oversampling until the effect is actually used
-    // (see setEffectIntensity — oversampling costs CPU even at wet = 0).
-    masterDistortion = new Tone.Distortion({ distortion: 0.9, oversample: 'none' });
+    masterDistortion = new Tone.Distortion({ distortion: 0.9, oversample: '4x' });
     masterDistortion.wet.value = 0; // Start fully dry
     masterFilter = new Tone.Filter({ frequency: 22050, type: 'lowpass', Q: 1 });
     masterLimiter = new Tone.Limiter(-0.1);
-    masterOutputTrim = new Tone.Gain(OUTPUT_TRIM_DB, 'decibels');
 
     masterDistortion.connect(masterFilter);
     masterFilter.connect(masterLimiter);
     masterLimiter.connect(masterMeter);
-    masterMeter.connect(masterOutputTrim);
-    masterOutputTrim.toDestination();
+    masterMeter.toDestination();
   }
   // Sources connect to the distortion node (top of chain)
   return masterDistortion;
@@ -159,17 +182,6 @@ export function getMeterLevel() {
  */
 export function setEffectIntensity(effect, intensity) {
   if (effect === 'bitcrusher' && masterDistortion && masterFilter) {
-    // The waveshaper processes audio even when the effect is fully dry, so 4x
-    // oversampling would cost CPU in the audio thread on every track — CPU that
-    // matters on a wireless output path, where underruns become clicks/dropouts
-    // (BUGS.md E). Enable it only while the effect is actually audible, and only
-    // on the transition: this runs per animation frame while the eel is held.
-    const wantsOversample = intensity > 0;
-    if (wantsOversample !== effectOversampled) {
-      effectOversampled = wantsOversample;
-      masterDistortion.oversample = wantsOversample ? '4x' : 'none';
-    }
-
     // Distortion wet: 0 (clean) → 1 (heavy distortion)
     masterDistortion.wet.value = intensity;
 
@@ -863,7 +875,7 @@ export class TrackPreloader {
 let contextWarmed = false;
 
 export async function initAudioContext() {
-  if (Tone.context.state !== 'running') {
+  if (Tone.getContext().state !== 'running') {
     await Tone.start();
     console.log('Audio context started');
   }
@@ -900,7 +912,7 @@ function warmUpMasterChain() {
 // iOS uses 'suspended' and the WebKit-specific 'interrupted' when the audio
 // session is taken away (device unplugged, another app grabs audio, etc.).
 export function getAudioContextState() {
-  return Tone.context.state;
+  return Tone.getContext().state;
 }
 
 // Subscribe to AudioContext state changes. iOS suspends the context on
@@ -908,12 +920,13 @@ export function getAudioContextState() {
 // paused state so the next Play tap can resume it. Binds to the raw context
 // because Tone's wrapper doesn't reliably surface the iOS 'interrupted' state.
 export function onAudioContextStateChange(callback) {
-  const raw = Tone.context.rawContext || Tone.context;
+  const ctx = Tone.getContext();
+  const raw = ctx.rawContext || ctx;
   const handler = () => callback(raw.state);
   if (typeof raw.addEventListener === 'function') {
     raw.addEventListener('statechange', handler);
-  } else if (typeof Tone.context.on === 'function') {
+  } else if (typeof ctx.on === 'function') {
     // Fallback to Tone's own emitter if no raw context is exposed
-    Tone.context.on('statechange', () => callback(Tone.context.state));
+    ctx.on('statechange', () => callback(ctx.state));
   }
 }
