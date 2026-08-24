@@ -295,6 +295,28 @@ Credits backdrop still covers the full viewport and the window still centres on 
 Track 7's faders return exactly the value aimed at; Track 5's strip resolves every button
 and slides correctly.
 
+**Follow-up fix (2026-08-17): fader strip could paint over the lyric line.**
+`.fader-strip` had a fixed height (15rem, 11rem below 700px) while its flex row only gets
+what's left over. The row centres and doesn't clip, so on a short viewport the strip
+overflowed and painted across the tagline. Reported on **iOS Firefox** (iPhone 13 mini) but
+it is a height problem, not an engine one — measured overlaps at 610px (19px) and at 712px
+(23px, the band just above the `max-height: 700px` rule where the strip jumps back to 15rem
+and nobody had landed yet). Safari on the mini (~693px) clears it by 57px, which was luck.
+
+Fixed with `max-height: 100%` on the strip — what the CSS comment there always claimed
+("as tall as fits"). Safari on the mini is bit-for-bit unchanged; iPad portrait goes from
+324px faders with 10px clearance to 267px with 68px.
+
+**Accepted residuals on iOS Firefox (won't fix — minority shell, and Gustav's call):**
+- **Shorter faders.** Firefox leaves ~610px of viewport against Safari's ~693, so once the
+  strip can't overflow there is simply less room. The old look was the overlap.
+- **Controls sit proportionally lower** on every track. **Pre-existing, unrelated to the
+  clamp** — `.track-area` has a fixed `padding-top: 80px` whatever the height, so on a
+  shorter viewport it eats a larger share. If it ever matters, the knob is a
+  `@media (max-height: 650px)` block reducing that padding: it would raise the controls and
+  hand the fader row ~30px back, and it cannot reach Safari on the mini (693px), the iPad or
+  the desktop. Deliberately not done now — the layout is tuned and this is polish.
+
 **Observation, not acted on:** `max-height: 780px` also caps the card on phones *taller*
 than 780 px of viewport (iPhone 13 mini is ~712 px so it fills; a 14 Pro Max would leave
 ~50 px). Pre-existing, unrelated to this fix, and needs a real device to judge.

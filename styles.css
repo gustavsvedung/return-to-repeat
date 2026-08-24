@@ -434,6 +434,14 @@ button:active {
     justify-content: center;
     width: 100%;
     height: 15rem;
+    /* Never taller than the space the controls row actually got. The height
+       above is a wish, not a promise: on a short viewport the row is smaller
+       than 15rem, and since the row centres its content and doesn't clip, the
+       strip would otherwise overflow and paint over the lyric line below.
+       Seen on iOS Firefox (permanent bottom toolbar → less viewport than
+       Safari), but it's a height problem, not an engine one — Safari clears it
+       by ~11px on an iPhone 13 mini, which is luck rather than design. */
+    max-height: 100%;
     transform: translateY(-50px);
     touch-action: none;
     user-select: none;
