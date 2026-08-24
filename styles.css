@@ -572,7 +572,8 @@ footer p {
 }
 
 /* Light UI: lighten the window border to match the other controls */
-.container.light-ui .credits-window {
+.container.light-ui .credits-window,
+.container.light-ui .rotate-hint p {
     border-color: rgba(235, 230, 220, 0.45);
 }
 
@@ -701,6 +702,50 @@ footer p {
 @media (min-width: 768px) and (min-height: 1400px) {
     .container {
         zoom: 1.5;   /* 1290px of 1400 */
+    }
+}
+
+/* === Phone landscape: ask for portrait instead of showing the clipped card ===
+
+   iOS Safari refuses screen.orientation.lock() in an ordinary tab, so a real
+   orientation lock is impossible for someone who just browsed to the site — all
+   we can do is decline to render the landscape layout, which otherwise clips
+   (the card is portrait by design and the controls fall off the bottom).
+
+   Scoped deliberately: max-height keeps iPad landscape out of it (that case
+   looks good and stays), and hover:none keeps a desktop user with a short, wide
+   window from being told to rotate their monitor. Audio keeps playing
+   underneath — rotating mid-listen shouldn't punish the listener.
+
+   Borrows the credits window's look: same blurred backdrop, same bordered box. */
+
+.rotate-hint {
+    display: none;
+}
+
+@media (orientation: landscape) and (max-height: 500px) and (hover: none) {
+    .rotate-hint {
+        position: fixed;
+        inset: 0;
+        z-index: 200;   /* above the credits window (101) */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.18);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+
+    .rotate-hint p {
+        margin: 0;
+        padding: 28px 32px;
+        border: 2px solid rgba(0, 0, 0, 0.22);
+        border-radius: 4px;
+        font-family: 'EB Garamond', serif;
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--ink);
+        text-align: center;
     }
 }
 

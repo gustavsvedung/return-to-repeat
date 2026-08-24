@@ -74,7 +74,8 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
   system output to the speaker instead); iOS Firefox unchanged and not pursued.
 - **F** — iPad portrait **fixed** (the card scales up on tall large viewports); worth a look
   on the actual iPad.
-- **PWA + orientation lock** — installable app; lock phones to portrait via the manifest.
+- **PWA** — installable app. Phone landscape is already handled in CSS (a "turn the phone
+  upright" overlay); the manifest's `orientation` is a bonus on Android and unverified on iOS.
 - Android smoke test (no device yet).
 
 ## Documentation

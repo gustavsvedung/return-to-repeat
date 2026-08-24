@@ -299,19 +299,37 @@ and slides correctly.
 than 780 px of viewport (iPhone 13 mini is ~712 px so it fills; a 14 Pro Max would leave
 ~50 px). Pre-existing, unrelated to this fix, and needs a real device to judge.
 
-### Orientation lock (folds into the PWA step)
+### Orientation on phones — **[x] handled in CSS (2026-08-17); manifest still open**
 
 Gustav wants the app-like layout **never in landscape on phones** (iPad landscape is fine).
-How it can actually be done:
+In landscape the card clips: it's portrait by design, so the controls fall off the bottom.
+
+**Landed** (`index.html`, `styles.css`): a `#rotate-hint` overlay that covers the viewport in
+phone landscape and asks for portrait — "Turn the phone upright" — borrowing the credits
+window's look (same blurred backdrop, same bordered box, same light-UI border swap). Audio
+keeps playing underneath, so rotating mid-listen isn't punished; rotating back restores
+everything. It **does** block the transport while shown — deliberate, since the point is to
+stop the clipped layout being used, and the way out is to rotate.
+
+Scoped `(orientation: landscape) and (max-height: 500px) and (hover: none)`:
+- `max-height: 500px` keeps **iPad landscape** out of it (930+ px tall) — that case looks
+  good and stays. Phone landscape tops out around 430 px (14 Pro Max), so the gap is wide.
+- `hover: none` keeps a **desktop** user with a short, wide window from being told to rotate
+  their monitor.
+
+**Verified on macOS Chrome:** shows at 667x375 with touch emulation, hidden in portrait
+(375x812) with the play button hit-testable again, hidden at 812x375 *without* touch
+emulation (the desktop guard), and the border follows the light/dark track backgrounds.
+
+**Why a real lock isn't available:**
 - **Runtime JS** (`screen.orientation.lock('portrait')`) — **not supported on iOS Safari**
   in a normal tab, so useless for the primary audience. Don't rely on it.
-- **PWA manifest** `"orientation": "portrait"` — the real mechanism; respected when the
-  app is **installed to the home screen** (standalone) on iOS and Android. This is the
-  clean fix and belongs in the PWA work. Caveat: a blanket `portrait` would also lock the
-  iPad PWA to portrait — if we want to keep iPad landscape, use `any` in the manifest and
-  add a **CSS landscape "rotate to portrait" hint scoped to phone widths** instead.
-- **CSS fallback** for browser-tab (non-installed) use: a phone-width + `orientation: landscape`
-  media query showing a gentle rotate hint, since the tab can't be force-locked on iOS.
+- **PWA manifest** `"orientation": "portrait"` — reliable on **Android**. On **iOS**,
+  home-screen web apps have historically **ignored** the manifest's `orientation` member;
+  treat it as unverified until it's actually installed on the iPhone and tested. Earlier
+  notes here claimed iOS respects it — that claim was too confident, hence the CSS hint,
+  which likely carries iOS regardless. Caveat if it does work: a blanket `portrait` would
+  also lock the **iPad** PWA to portrait, so use `any` and let the CSS hint do the scoping.
 
 ## Design decisions
 
