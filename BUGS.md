@@ -25,7 +25,7 @@ most of the alarming entries. Suggested fix order:
 4. ~~**C — Three 1 vocal drift**~~ ✅ **DONE & verified** (trim-logic fix; files were pristine — no re-export)
 5. ~~**F — Layout scale-up on large viewports**~~ ✅ **DONE & verified** (stepped `zoom` on the card)
 6. ~~**E — AirPlay/Cast quality**~~ ✅ **DONE & verified** (AirPlay: context pinned to 44.1 kHz;
-   Chromecast dropouts still to re-test)
+   Chromecast dropouts re-tested and closed as a Chrome tab-casting limit)
 
 **Didn't reproduce / safe (good news, recorded so we don't re-chase):**
 - Omni 1 from a *plain* lock screen — audio resumed (iOS Safari & Firefox). The real
@@ -165,11 +165,12 @@ never satisfying that; it **does** count on iOS with natural listening. Mechanis
   completion **never fired**. Now `>= 60`; the `!isTrackHeardInCycle` guard keeps it firing once.
 - Design Q (below): should a completion give the listener any visible acknowledgment?
 
-### E. AirPlay / Cast audio quality — **[x] FIXED & verified on iPhone (2026-08-17)** — AirPlay; Chromecast still to re-test
+### E. AirPlay / Cast audio quality — **[x] DONE (2026-08-17)** — AirPlay fixed; Chromecast is platform, won't fix
 
 - [ ] **[Omni 2] AirPlay digital distortion**, intermittent (iOS Safari & Firefox — sometimes
   clean). Spans both browsers → not engine-specific app logic.
-- [ ] **Chromecast clicks/dropouts** when casting from macOS Chrome to a wireless speaker.
+- [x] **Chromecast clicks/dropouts** when casting from macOS Chrome to a wireless speaker.
+  Re-tested and closed as a platform limit of Chrome tab casting — see the result below.
 - Both are characteristic of **wireless resampling**. Mostly platform, but two things on our
   side plausibly made it worse, and both are now fixed (`stem-player.js`):
 
@@ -215,8 +216,21 @@ destination: iOS must resample the live stream and reconfigure the audio unit mi
 which is what we hear. Also explains the original "sometimes clean" — that was the sessions
 where the speaker was connected before load.
 
-**Still to test (Chromecast):** the macOS Chrome clicks/dropouts are a separate symptom
-(underruns, not resampling grit) and haven't been re-tested since the oversampling change.
+**Chromecast result (macOS Chrome, 2026-08-17) — platform, won't fix.** Re-tested across
+several tracks at both 44.1 and 48 kHz: the gaps/stutter are present in every case, random,
+and unrelated to the material or to user interaction. That rules out our side of it — a fault
+tied to audio-thread load would track the heavy configurations (Track 7 with all three drones)
+and cluster around the moment a lazy-start stem joins. It doesn't. What's left is Chrome's tab
+casting itself: the tab's audio is re-encoded and streamed over Wi-Fi, and jitter there lands
+as dropouts no matter what the page does.
+
+Useful side effect: since 44.1 and 48 behave identically over Cast, the 44.1 pin costs nothing
+here — the trade-off worried about before the test doesn't exist.
+
+**Workaround worth knowing** (not a code change): tab casting is the fragile path. Sending the
+Mac's *system* output to the speaker instead — AirPlay from System Settings > Sound, or a
+Bluetooth speaker — routes at the OS level with no browser re-encode, and is the more robust
+way to get the album onto a wireless speaker from the desktop.
 
 **`?sr=44100` result (iPhone, 2026-08-17) — the rate match is the fix, on Safari:**
 - **iOS Safari:** load on the phone's own output, play, switch to AirPlay mid-playback →

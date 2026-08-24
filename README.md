@@ -68,9 +68,10 @@ tweak (a completion now forgives up to two skipped tracks). Full history and the
 remaining open items live in **[BUGS.md](BUGS.md)**.
 
 **Still open / planned:**
-- **E** — AirPlay distortion **fixed** (the AudioContext is pinned to 44.1 kHz, so switching
-  output to AirPlay mid-playback no longer forces a live resample). Chromecast clicks still
-  to re-test; iOS Firefox unchanged and not pursued.
+- **E** — **done.** AirPlay distortion fixed: the AudioContext is pinned to 44.1 kHz, so
+  switching output to AirPlay mid-playback no longer forces a live resample. Chromecast
+  dropouts persist at any sample rate and are a limit of Chrome's tab casting (send the Mac's
+  system output to the speaker instead); iOS Firefox unchanged and not pursued.
 - **F** — iPad portrait **fixed** (the card scales up on tall large viewports); worth a look
   on the actual iPad.
 - **PWA + orientation lock** — installable app; lock phones to portrait via the manifest.
