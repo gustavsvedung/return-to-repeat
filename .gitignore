@@ -11,5 +11,8 @@ node_modules/
 # Editor / local tooling
 *.log
 
+# Obsidian workspace config (created by opening the repo as a vault to read the docs)
+.obsidian/
+
 # Claude Code local settings (personal permission grants — not for the repo)
 .claude/settings.local.json
