@@ -690,6 +690,16 @@ footer p {
     .track-area {
         padding-top: 48px;
     }
+
+    /* The fader strip's -50px nudge was tuned against the 80px padding above.
+       With 48px it lifts the strip past the top of .track-area, which clips
+       (overflow: hidden) and eats the 2px top border — the faders render as
+       open-topped boxes. Keep the nudge smaller than the padding so there's
+       always headroom; 24px leaves 24px above and a 24px gap to the lyric
+       line below. */
+    .fader-strip {
+        transform: translateY(-24px);
+    }
 }
 
 /* Narrow phones (Android 360px and under). At 2.4rem "RETURN TO REPEAT" needs

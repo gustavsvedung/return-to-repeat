@@ -318,6 +318,15 @@ whatever height is left. One change gives both back:
 - **iPhone 13 mini in Safari (693px) is above the threshold and untouched** — padding still
   80px, faders still 176px. iPad and desktop are nowhere near it.
 
+**Follow-up the same day: the padding trim clipped the faders' top border.** `.fader-strip`
+carries `transform: translateY(-50px)`, tuned against the old 80px padding (which left 30px of
+headroom). Against 48px it lifted the strip 2px *above* `.track-area`, whose `overflow: hidden`
+then ate the 2px top border — the faders rendered as open-topped boxes on Android Chrome and
+iOS Firefox, while Safari, still on 80px padding, was fine. The nudge is now `-24px` inside the
+same `max-height: 640px` block: smaller than the padding, so headroom can't go negative.
+**Verified:** 360x620 and 375x610 both show 24px of headroom, the top border intact, faders at
+160px / 139px, and 24px to the lyric line; 375x693 unchanged (80px padding, -50px, 176px).
+
 **Observation, not acted on:** `max-height: 780px` also caps the card on phones *taller*
 than 780 px of viewport (iPhone 13 mini is ~712 px so it fills; a 14 Pro Max would leave
 ~50 px). Pre-existing, unrelated to this fix, and needs a real device to judge.
