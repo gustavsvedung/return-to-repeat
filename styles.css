@@ -690,6 +690,26 @@ footer p {
            wrap: 9.2vw is 33px at 360px wide, which always fits the column. */
         font-size: min(2.1rem, 9.2vw);   /* line needs ~301px of 332px */
     }
+
+    /* Track 3's four toggles are the widest row in the album, and at 72px + 10px
+       gaps they need 318px. A 360px phone leaves 332px — 14px of slack — and
+       anything under 346px wraps them onto a second row, which then overflows
+       onto the lyric line (found on a Galaxy Xcover 5, whose ~2.1 DPR gives a
+       343px viewport). Smaller buttons and tighter gaps below the mini's 375px
+       bring the row to 280px, which clears even a 320px screen. */
+    .track-controls {
+        gap: 8px;
+    }
+
+    .toggle-btn,
+    .stem-select-btn {
+        width: 64px;
+        height: 64px;
+    }
+
+    .fader-col {
+        width: 64px;   /* keep the control widths consistent across tracks */
+    }
 }
 
 /* Very narrow (old iPhone SE, small Androids at 320px): 2.1rem wraps again. */

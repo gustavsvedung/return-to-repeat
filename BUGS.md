@@ -342,7 +342,30 @@ was 122px), Track 3 clears the lyric line by 39px (was 12px *over* it), Track 7'
 76px → 127px. Unchanged at 375x693 (mini, still 2.4rem), and at iPad portrait (still 2.2rem,
 2 lines).
 
-**Second root cause, found when the header fix wasn't enough: browser text scaling.**
+**Third root cause — the actual one on this device: the control row is 3px too wide.**
+Text scaling turned out to be at **100%** on the Samsung, so the theory below was wrong about
+*this* device (the px conversion still stands on its own merits — see the note at the end).
+The real number came from the screenshots: the buttons measured ~154 device px while the CSS
+pins them at 72, so the device runs at **~2.1 DPR** and its viewport is **~343 CSS px**, not
+360.
+
+At 343px the card leaves 315px of usable width, while Track 3's four toggles at 72px with 10px
+gaps need **318px** — short by 3px. They wrap to a second row (3 + 1), which then overflows
+onto the lyric line by 54px. Exactly reproduced at 343x620.
+
+**The margin was thin everywhere, not just here:** anything under a **346px** viewport wraps
+that row, and the common Android width of 360px clears it by only 14px.
+
+**Fix** (inside the existing `max-width: 374px` block): toggles and stem-select buttons to
+**64px**, control gap to **8px**, fader columns to 64px for consistency. The row then needs
+280px, which clears even a 320px screen. Keyed to width below the mini's 375px, so the iPhone,
+iPad and desktop cannot be affected.
+
+**Verified:** 343x620 → one row, 52px clearance (was -54). 320x620 → one row, 56px clearance.
+375x693 → toggles still 72px, gap still 10px, header still 38.4px, i.e. bit-for-bit the
+pre-session layout.
+
+**Second root cause (real, but not what this device hit): browser text scaling.**
 The overlap survived on every track with buttons *and* a lyric line. It isn't the viewport —
 it's the **root font size**. Every control dimension was in `rem`, so Chrome Android's
 **Text scaling** setting (commonly above 100% on Samsung/One UI) inflated the *buttons* along
