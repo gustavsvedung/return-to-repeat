@@ -421,7 +421,13 @@ never upscales them. Filenames unchanged, so no code changed; the 550–1254px o
 in git history.
 
 **Verified:** Gustav on both phones — resampled better or indistinguishable, with only the
-original horse still looking glitchy. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
+original horse still looking glitchy.
+
+**Residual (2026-08-17): Track 5's flute birds still speckle on Android, not on iOS.** Those
+are the only icons drawn as a **CSS mask** with a colour behind them, rather than as an
+`<img>`; the resampling fixed the `<img>` path everywhere but Android's mask rasterisation
+still shows artifacts. If it's worth another pass, the fix is probably to stop masking at
+runtime — ship five pre-tinted PNGs, or an SVG silhouette — rather than to resample again. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
 largest non-audio payload on the page.
 
 ### I. Background audio doesn't survive backgrounding on iOS — **platform limit, documented**
@@ -438,6 +444,10 @@ Standalone display doesn't change that; it's the audio session, not the browser 
 The resume-on-return is *our* code working as designed (Cluster A: `resumeAfterInterruption`
 on `visibilitychange`), so the failure is graceful rather than the old freeze.
 
+**Android is fine** (verified on the installed app and in Chrome, 2026-08-17): background
+audio survives app-switch and screen-off there. So this is an **iOS limitation, not a PWA
+one** — Android doesn't suspend the context the same way.
+
 **Not fixed. The known workaround and why it wasn't taken:** keeping a silent looping
 `<audio>` element playing makes iOS treat the page as playing media, which can keep the
 context alive in the background. It's a hack whose behaviour varies by iOS version, it holds
@@ -445,6 +455,38 @@ an audio session open for as long as the tab lives, and it would interact with t
 interruption handling in Cluster A that took real device testing to get right. Worth
 revisiting only if background playback becomes a priority — and the same mechanism is what
 would enable lock-screen transport controls via MediaSession, so those two would be one job.
+
+### J. Renderer crash on rapid skipping (Android) — **OPEN, highest-severity item left**
+
+Reported 2026-08-17 on the Samsung Galaxy Xcover 5, in **both** Chrome and the installed app:
+rapidly tapping Next or Shuffle can take the whole page down to Chrome's "Aw, snap" error
+screen. Not seen on iOS or macOS so far.
+
+**Leading hypothesis — decoded audio memory.** Web Audio keeps buffers as float32 stereo, so
+a decoded MP3 costs `duration x 44100 x 2 x 4` bytes regardless of how small the file is:
+
+| track | length | decoded |
+|---|---|---|
+| 01 | 274 s | **92 MB** |
+| 05A | 192 s | 65 MB |
+| 09A1 | 170 s | 57 MB |
+| 11 | 147 s | 49 MB |
+| 04A | 134 s | 45 MB |
+| 07B | 99 s | 33 MB (x4 with the three drones = **133 MB**) |
+| 03A | 46 s | 16 MB (x5 with the vocal stems = 78 MB) |
+
+A single track can therefore hold 90–130 MB of buffers, and the preloader deliberately keeps
+a second track ready. Rapid skipping puts several loads in flight at once, and `loadGeneration`
+cancels the *logic* but not the fetch-and-decode already running — the memory is still
+allocated before the result is discarded. On a low-end Android renderer that's a plausible OOM.
+
+**Where to start:** measure peak `performance.memory` / decoded buffer totals while skipping;
+check that cancelled loads dispose their players immediately rather than at the next GC;
+consider serialising loads or aborting in-flight ones; consider not preloading on
+memory-constrained devices (`navigator.deviceMemory`).
+
+**Severity note:** every other open item is cosmetic. This one loses the listener's session.
+It should be the next thing looked at, ahead of any polish.
 
 ### Orientation on phones — **[x] handled in CSS (2026-08-17); manifest still open**
 

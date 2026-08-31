@@ -153,9 +153,13 @@ Add to Home Screen do work over plain http on iOS; the Android install prompt do
   orientation as predicted.
 - [ ] ~~background audio in standalone~~ — **doesn't work; platform limit, see BUGS.md I.**
 - [x] **Android Chrome** — status bar picks up the per-track `theme-color`.
-- [ ] **Android Chrome, after the Pages deploy** — install prompt offered, app launches
-  standalone. (Needs HTTPS; can't be tested over the LAN.)
-- [ ] **Both, after deploy** — audio still streams normally in the installed app.
+- [x] **Android Chrome, after the Pages deploy** (2026-08-17) — install prompt offered, app
+  installs and launches standalone. **Background audio works on Android**, unlike iOS.
+- [x] **Both, after deploy** — audio streams normally from the Pages URL on Android and iPhone.
+
+New findings from that pass, both logged: the renderer can crash on rapid skipping
+(**BUGS.md J** — highest-severity open item), and Track 5's masked flute birds still speckle
+on Android (BUGS.md H residual).
 
 ## Confirm the known issues (investigate bucket)
 - [ ] **Omni 1** — Play, then **lock the iPhone (or switch apps) for ~30–60s**, return: does audio resume, or can you resume it? (Safari iOS). Watch console for AudioContext warnings.
