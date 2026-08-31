@@ -424,6 +424,28 @@ in git history.
 original horse still looking glitchy. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
 largest non-audio payload on the page.
 
+### I. Background audio doesn't survive backgrounding on iOS — **platform limit, documented**
+
+The PWA handover notes claimed Add to Home Screen already gave background audio "somewhat by
+accident". **Measured on the installed app (iPhone 13 mini, 2026-08-17): it doesn't.**
+Switching apps or locking the screen kills the audio; it resumes on return.
+
+**Why:** on iOS, a Web Audio `AudioContext` is suspended when the page goes to the background.
+Only a real media element (`<audio>`/`<video>`) keeps an audio session alive there, and this
+player is pure Web Audio — it has to be, since the whole album is synchronised stems.
+Standalone display doesn't change that; it's the audio session, not the browser chrome.
+
+The resume-on-return is *our* code working as designed (Cluster A: `resumeAfterInterruption`
+on `visibilitychange`), so the failure is graceful rather than the old freeze.
+
+**Not fixed. The known workaround and why it wasn't taken:** keeping a silent looping
+`<audio>` element playing makes iOS treat the page as playing media, which can keep the
+context alive in the background. It's a hack whose behaviour varies by iOS version, it holds
+an audio session open for as long as the tab lives, and it would interact with the
+interruption handling in Cluster A that took real device testing to get right. Worth
+revisiting only if background playback becomes a priority — and the same mechanism is what
+would enable lock-screen transport controls via MediaSession, so those two would be one job.
+
 ### Orientation on phones — **[x] handled in CSS (2026-08-17); manifest still open**
 
 Gustav wants the app-like layout **never in landscape on phones** (iPad landscape is fine).

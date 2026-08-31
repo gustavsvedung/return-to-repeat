@@ -144,18 +144,18 @@ Service workers need a **secure context**, so this pass can't run over
 `http://<LAN-IP>:8000` — only over HTTPS (GitHub Pages) or `localhost`. The manifest and
 Add to Home Screen do work over plain http on iOS; the Android install prompt doesn't.
 
-- [ ] **macOS Chrome on `http://localhost:8000`** — DevTools > Application: manifest parses
-  with no errors, all three icons resolve, service worker registers and activates.
-- [ ] **iPhone, Safari** — Share > Add to Home Screen. Launches with no browser chrome, right
-  icon and name. **Re-check the layout**: standalone adds ~100px of viewport, which crosses
-  the 700px breakpoint into the larger branch.
-- [ ] **iPhone, installed** — does background audio still survive an app switch / lock?
-  (Reported as a side effect of Add to Home Screen before any manifest existed.)
-- [ ] **iPhone, installed** — does iOS honour `orientation`? Expected **no**; the CSS rotate
-  hint should carry it. Confirm the hint still appears in the installed app.
-- [ ] **Android Chrome** — an install prompt is offered; the installed app launches
-  standalone; the status bar picks up the per-track `theme-color`.
-- [ ] **Both** — audio still streams normally in the installed app (nothing is cached).
+- [x] **macOS Chrome on `http://localhost:8000`** (2026-08-17) — manifest parses, all three
+  icons render, `sw.js` **activated and running**, and Chrome offers Install. The only
+  warnings ask for manifest `screenshots` to unlock the richer install dialog — cosmetic.
+- [x] **iPhone, Safari** (2026-08-17) — Add to Home Screen works; installs with the right
+  icon and name and launches standalone. **No layout issues** in the larger branch.
+- [x] **iPhone, installed** — rotate hint still appears in landscape, so the CSS carries
+  orientation as predicted.
+- [ ] ~~background audio in standalone~~ — **doesn't work; platform limit, see BUGS.md I.**
+- [x] **Android Chrome** — status bar picks up the per-track `theme-color`.
+- [ ] **Android Chrome, after the Pages deploy** — install prompt offered, app launches
+  standalone. (Needs HTTPS; can't be tested over the LAN.)
+- [ ] **Both, after deploy** — audio still streams normally in the installed app.
 
 ## Confirm the known issues (investigate bucket)
 - [ ] **Omni 1** — Play, then **lock the iPhone (or switch apps) for ~30–60s**, return: does audio resume, or can you resume it? (Safari iOS). Watch console for AudioContext warnings.
