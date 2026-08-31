@@ -256,15 +256,29 @@ header h1 {
 /* Inline SVG icons (was: Font Awesome web font). Sized in em and filled with
    currentColor so font-size and color still drive them exactly as they did when
    they were glyphs — every existing rule, light-ui overrides included, keeps
-   working untouched. width:auto lets each icon keep its own aspect ratio. */
+   working untouched.
+
+   Two deliberate choices, both to avoid engine differences that render the
+   icons invisible:
+   - The sprite is hidden by collapsing it to zero size rather than
+     `display: none`, which stops <use> resolving its symbols in some engines.
+   - Both width AND height are set. Relying on `width: auto` to infer the box
+     from the viewBox aspect ratio works in Blink but not dependably in WebKit
+     or Gecko, where it can compute to nothing — the icon is present but
+     invisible. A square em box costs nothing: each icon keeps its own
+     proportions inside it via preserveAspectRatio, so it renders at exactly
+     the height the old font glyph did. */
 .icon-sprite {
-    display: none;
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
 }
 
 svg.btn-icon,
 svg.loading-spinner {
+    width: 1em;
     height: 1em;
-    width: auto;
     fill: currentColor;
 }
 
