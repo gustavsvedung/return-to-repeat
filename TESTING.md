@@ -161,6 +161,49 @@ New findings from that pass, both logged: the renderer can crash on rapid skippi
 (**BUGS.md J** — highest-severity open item), and Track 5's masked flute birds still speckle
 on Android (BUGS.md H residual).
 
+## Before release: one regression pass on the current build
+
+Everything below has been tested, but mostly *change by change*. The 2026-08-17 session
+replaced foundations — the AudioContext sample rate, every third-party dependency, the whole
+icon system, the artwork, and the layout breakpoints. Run the **Core pass** above once,
+start to finish, on the iPhone, against the build you intend to ship. Twenty minutes.
+
+Pay particular attention to the parts that no single fix touched, so nothing has looked at
+them in a while:
+
+- [ ] **T10** — `?plays10=5` vs `?plays10=15` still switch variation
+- [ ] **T11** — all three locked stages (`?completions=2` / `4` / `5`) and the eel effect
+- [ ] **Album completion** actually counts after a real listen (console)
+- [ ] **NoSleep** — screen still stays awake during playback
+- [ ] **Credits window** opens, centres over the card, closes on outside click
+
+## After going live: the network pass
+
+Most of what we tested is origin-independent and carries over — layout, fonts, icons,
+interaction, audio routing, the 44.1 kHz pin, the PWA. What does **not** carry is anything
+that depends on how fast bytes arrive. The LAN serves 178 MB from two metres away; the
+internet won't.
+
+- [ ] **Cold first load** on each phone — how long to first audio, and does the spinner
+  behave the whole way through?
+- [ ] **Fast-skip under real latency** — the *highest-value check here*. Cluster B (stuck
+  spinner, fast-skip race) was a **timing** bug, and slow loads widen exactly the window it
+  lived in. Hammer Next over a slow connection; it's also related to the crash in BUGS.md J,
+  since both involve loads in flight. On desktop, use DevTools > Network > throttling
+  ("Slow 4G") rather than guessing.
+- [ ] **One listen on cellular**, not Wi-Fi — every test so far has been on Wi-Fi.
+- [ ] **PWA from the live URL** — install prompt on Android, Add to Home Screen on iOS,
+  standalone launch, audio streams.
+- [ ] **No third-party requests** — DevTools > Network, filter by domain: everything should
+  come from the site's own origin. This is the claim vendoring bought; worth confirming once
+  on the real deployment.
+
+**Caching, for later.** `no_cache_server.py` sends no-store on everything; GitHub Pages sends
+its own cache headers. Repeat visits get faster, but after release a listener can hold stale
+files for a while after you push a fix — so don't conclude a deployed fix didn't work until
+you've hard-reloaded. If updates ever need to be immediate, that's the point at which the
+(currently inert) service worker would earn its keep.
+
 ## Confirm the known issues (investigate bucket)
 - [ ] **Omni 1** — Play, then **lock the iPhone (or switch apps) for ~30–60s**, return: does audio resume, or can you resume it? (Safari iOS). Watch console for AudioContext warnings.
 - [ ] **Omni 4 / 5** — Tap **Next very rapidly 5–6×**: does it overshoot/skip extra tracks, land on the wrong one, or stutter loading?
