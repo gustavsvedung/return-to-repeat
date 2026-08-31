@@ -342,8 +342,26 @@ was 122px), Track 3 clears the lyric line by 39px (was 12px *over* it), Track 7'
 76px → 127px. Unchanged at 375x693 (mini, still 2.4rem), and at iPad portrait (still 2.2rem,
 2 lines).
 
-**Known residual — very short viewports still overlap slightly:** 360x560 (-21px) and
-320x568 (-6px, old iPhone SE). The device we actually tested sits at ~620 and is clean, but
+**Second root cause, found when the header fix wasn't enough: browser text scaling.**
+The overlap survived on every track with buttons *and* a lyric line. It isn't the viewport —
+it's the **root font size**. Every control dimension was in `rem`, so Chrome Android's
+**Text scaling** setting (commonly above 100% on Samsung/One UI) inflated the *buttons* along
+with the text. Reproduced exactly at a 17px root: toggles grow 72px → 77px, Track 3's four
+birds wrap to two rows (3 + 1), and the controls overlap the tagline by **85px** — matching
+Gustav's screenshots including the wrap.
+
+**Fix:** control geometry is now **px, not rem** (26 declarations: buttons, strips, faders,
+masked images, the eel). These are graphics, not type, and shouldn't follow a text-size
+preference — typography still scales, which is what the setting is for. Plus `min(2.1rem,
+9.2vw)` on the narrow-phone header so scaling can't push the title back into a wrap.
+
+**Verified at 360x620, Track 3:** at the default 16px root every value is *identical* to the
+rem it replaced (so no device already tested changes at all), and across roots 16 / 17 / 19 /
+22px the buttons hold at 72x88, stay on one row, the header stays two lines, and clearance to
+the lyric line stays positive (40 / 35 / 26 / 13px) where it used to be **-85px** at 17px.
+
+**Known residual — very short viewports still overlap slightly:** 360x560 (-20px) and
+320x568 (old iPhone SE). Pure height shortage, unaffected by either fix above. The device we actually tested sits at ~620 and is clean, but
 the margin isn't large. The lever is the same one noted under F: a `@media (max-height: 650px)`
 block trimming `.track-area`'s fixed `padding-top: 80px` to ~48px would hand ~32px back to
 every cramped viewport — Android, the old SE, *and* the iOS Firefox spacing Gustav noticed —

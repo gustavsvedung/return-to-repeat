@@ -226,7 +226,7 @@ header h1 {
 
 #play-button {
     width: 100%;
-    height: 4.5rem;
+    height: 72px;
 }
 
 #play-button.loading {
@@ -263,7 +263,7 @@ header h1 {
 #next-button,
 #shuffle-button {
     flex: 1;
-    height: 4.5rem;
+    height: 72px;
 }
 
 /* === Shared button reset (for non-transport buttons) === */
@@ -291,6 +291,17 @@ button:active {
     background: rgba(0, 0, 0, 0.1);
 }
 
+/* === Track Controls (mute buttons, faders, sample buttons) ===
+
+   Control dimensions below are in **px, not rem**, on purpose. A listener who
+   raises their browser's text size (Chrome Android's "Text scaling", common on
+   Samsung) scales the root font, and rem-based button sizes grew with it: at a
+   107% setting the 72px toggles became 77px, the four birds on Track 3 wrapped
+   to two rows, and the controls overflowed onto the lyric line. These are
+   graphics, not type — they shouldn't follow a text preference. Typography
+   still scales, which is the point of the setting. At the default 16px root
+   these values are identical to the rem ones they replaced. */
+
 /* === Track Controls (mute buttons, faders, sample buttons) === */
 
 .track-controls {
@@ -308,8 +319,8 @@ button:active {
 
 /* Control buttons (mute, sample, cycle) */
 .control-button {
-    width: 4.5rem;
-    height: 3.5rem;
+    width: 72px;
+    height: 56px;
     font-size: 1.5rem;
 }
 
@@ -345,8 +356,8 @@ button:active {
 }
 
 .toggle-btn {
-    width: 4.5rem;
-    height: 4.5rem;
+    width: 72px;
+    height: 72px;
 }
 
 .toggle-btn .toggle-img {
@@ -371,16 +382,16 @@ button:active {
 
 /* Stem-select radio group buttons */
 .stem-select-btn {
-    width: 4.5rem;
-    height: 4.5rem;
+    width: 72px;
+    height: 72px;
 }
 
 /* Bird silhouette inside a sample-strip button — the PNG is used as a CSS mask,
    so background-color (set per-button via inline style) becomes the bird's colour.
    Explicit rem units avoid flex layout's percentage-resolution quirks. */
 .strip-img {
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 56px;
+    height: 56px;
     background-color: rgba(0, 0, 0, 0.5);  /* fallback if no color set */
     -webkit-mask-size: contain;
     mask-size: contain;
@@ -403,7 +414,7 @@ button:active {
 
 .sample-strip .sample-button {
     flex: 1;
-    height: 7rem;
+    height: 112px;
     border-radius: 0;
     border: 2px solid rgba(0, 0, 0, 0.22);
     border-right: none;
@@ -433,7 +444,7 @@ button:active {
     gap: 10px;
     justify-content: center;
     width: 100%;
-    height: 15rem;
+    height: 240px;
     /* Never taller than the space the controls row actually got. The height
        above is a wish, not a promise: on a short viewport the row is smaller
        than 15rem, and since the row centres its content and doesn't clip, the
@@ -457,7 +468,7 @@ button:active {
 }
 
 .fader-col {
-    width: 4.5rem;
+    width: 72px;
     height: 100%;
     position: relative;
     overflow: hidden;
@@ -492,7 +503,7 @@ button:active {
 }
 
 .locked-eel-img {
-    width: 7rem;
+    width: 112px;
     height: auto;
     opacity: 0.8;
     pointer-events: none;
@@ -597,22 +608,22 @@ footer p {
     }
 
     .control-button {
-        width: 3rem;
-        height: 3rem;
+        width: 48px;
+        height: 48px;
         font-size: 1.3rem;
     }
 
     .sample-strip .sample-button {
-        height: 6rem;
+        height: 96px;
     }
 
     .strip-img {
-        width: 3rem;
-        height: 3rem;
+        width: 48px;
+        height: 48px;
     }
 
     .fader-strip {
-        height: 14rem;
+        height: 224px;
     }
 }
 
@@ -636,12 +647,12 @@ footer p {
     }
 
     #play-button {
-        height: 3.8rem;
+        height: 60.8px;
     }
 
     #next-button,
     #shuffle-button {
-        height: 3.8rem;
+        height: 60.8px;
     }
 
     .vu-leds {
@@ -649,16 +660,16 @@ footer p {
     }
 
     .sample-strip .sample-button {
-        height: 5.5rem;
+        height: 88px;
     }
 
     .strip-img {
-        width: 2.75rem;
-        height: 2.75rem;
+        width: 44px;
+        height: 44px;
     }
 
     .fader-strip {
-        height: 11rem;
+        height: 176px;
     }
 
     footer {
@@ -675,14 +686,16 @@ footer p {
    narrow phones at any height. Measured on a Samsung Galaxy Xcover 5. */
 @media (max-width: 374px) {
     header h1 {
-        font-size: 2.1rem;   /* line needs ~301px of 332px */
+        /* min() so a raised text-size setting can't push the line back into a
+           wrap: 9.2vw is 33px at 360px wide, which always fits the column. */
+        font-size: min(2.1rem, 9.2vw);   /* line needs ~301px of 332px */
     }
 }
 
 /* Very narrow (old iPhone SE, small Androids at 320px): 2.1rem wraps again. */
 @media (max-width: 339px) {
     header h1 {
-        font-size: 1.9rem;   /* line needs ~272px of 292px */
+        font-size: min(1.9rem, 9.2vw);   /* line needs ~272px of 292px */
     }
 }
 
