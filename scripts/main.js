@@ -342,10 +342,24 @@ async function togglePlayback() {
   updatePlayButton();
 }
 
+// Build an <svg><use href="#icon-x"></svg> referencing the sprite in index.html.
+// SVG elements need createElementNS and setAttribute('class') — their className
+// property is a read-only SVGAnimatedString, unlike an HTML element's.
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function createIcon(symbolId, className) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('class', className);
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttribute('href', `#icon-${symbolId}`);
+  svg.appendChild(use);
+  return svg;
+}
+
 function updatePlayButton() {
-  const icon = playButton.querySelector('.btn-icon');
-  if (icon) {
-    icon.className = isPlaying ? 'fa-solid fa-pause btn-icon' : 'fa-solid fa-play btn-icon';
+  const use = playButton.querySelector('.btn-icon use');
+  if (use) {
+    use.setAttribute('href', isPlaying ? '#icon-pause' : '#icon-play');
   }
 }
 
@@ -394,9 +408,7 @@ function setLoadingState(loading) {
   if (loading) {
     playButton.classList.add('loading');
     if (!playButton.querySelector('.loading-spinner')) {
-      const spinner = document.createElement('i');
-      spinner.className = 'fa-solid fa-circle-notch loading-spinner';
-      playButton.appendChild(spinner);
+      playButton.appendChild(createIcon('circle-notch', 'loading-spinner'));
     }
   } else {
     playButton.classList.remove('loading');
@@ -409,8 +421,7 @@ function setLoadingState(loading) {
 function showErrorState() {
   const icon = playButton.querySelector('.btn-icon');
   if (icon) icon.style.display = 'none';
-  const errorIcon = document.createElement('i');
-  errorIcon.className = 'fa-solid fa-exclamation-triangle loading-spinner';
+  const errorIcon = createIcon('triangle-exclamation', 'loading-spinner');
   playButton.appendChild(errorIcon);
   setTimeout(() => {
     errorIcon.remove();

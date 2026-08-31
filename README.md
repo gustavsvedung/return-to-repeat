@@ -9,8 +9,11 @@ everything — the album reveals itself on its own terms.
 ## Tech
 
 - **Single-page web app, vanilla JS, no build step** — open `index.html` and it runs.
-- **Audio:** [Tone.js](https://tonejs.github.io/) v14.7.39 via CDN.
-- **Screen wake:** NoSleep.js (keeps mobile screens awake during playback).
+- **Audio:** [Tone.js](https://tonejs.github.io/) v14.7.39, self-hosted.
+- **Screen wake:** NoSleep.js (keeps mobile screens awake during playback), self-hosted.
+- **No third-party requests.** Scripts, fonts and icons are all served from this origin, so
+  the album doesn't depend on anyone else's uptime, sends no visitor data anywhere, and
+  renders identically for as long as these files exist.
 - No bundler, no minification, no framework — deliberately. Edit a file, reload, done.
 
 ## Running locally
@@ -48,6 +51,10 @@ scripts/
   storage.js          localStorage (visit count, listen cycles, album completions, unlocks)
 audio/                46 MP3 stems (per-track main + interactive stems)
 img/                  control icons (bird, cat, horse, eel)
+vendor/               self-hosted dependencies
+  tone.min.js         Tone.js 14.7.39
+  nosleep.min.js      NoSleep.js 0.12.0
+  fonts/              Jost 200 + EB Garamond italic 400 (latin, latin-ext)
 ```
 
 ## Repo & deployment
@@ -76,7 +83,8 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
   on the actual iPad.
 - **PWA** — installable app. Phone landscape is already handled in CSS (a "turn the phone
   upright" overlay); the manifest's `orientation` is a bonus on Android and unverified on iOS.
-- Android smoke test (no device yet).
+- ~~Android smoke test~~ **done** (Samsung Galaxy Xcover 5, Android 14) — core functions all
+  worked; the layout issues it surfaced are fixed and logged as BUGS.md G.
 
 ## Documentation
 
@@ -85,6 +93,14 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — how variations, signals, audio, and unlocks work.
 - **[PLANNING.md](PLANNING.md)** — the original design/spec (signals, per-track intent).
 - **[CLAUDE.md](CLAUDE.md)** — project context and conventions for AI-assisted work.
+
+## Credits for third-party assets
+
+- [Tone.js](https://tonejs.github.io/) — MIT. [NoSleep.js](https://github.com/richtr/NoSleep.js) — MIT.
+- Transport icons from [Font Awesome Free](https://fontawesome.com) 6.5.2 — icons licensed
+  CC BY 4.0, inlined as an SVG sprite in `index.html`.
+- [Jost](https://fonts.google.com/specimen/Jost) and
+  [EB Garamond](https://fonts.google.com/specimen/EB+Garamond) — SIL Open Font License 1.1.
 
 ---
 

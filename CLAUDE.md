@@ -5,7 +5,7 @@ An interactive web-based audio player for the album "Return to Repeat" by Gus By
 ## Project Overview
 
 - **Type:** Single-page web application (vanilla JS, no build step)
-- **Audio library:** Tone.js (v14.7.39) via CDN
+- **Audio library:** Tone.js (v14.7.39), self-hosted in `vendor/`
 - **Design approach:** Mobile-first, minimal, abstract
 - **Target:** Modern browsers (Chrome, Safari, Firefox)
 
@@ -58,7 +58,9 @@ The no-cache server prevents stale audio files during development.
 
 ## Development Notes
 
-- No npm/build process — all dependencies via CDN
+- No npm/build process. Dependencies are **vendored** in `vendor/` (Tone.js,
+  NoSleep.js, two font subsets); icons are an inline SVG sprite in `index.html`.
+  Nothing loads from a third-party origin — don't reintroduce a CDN link
 - Script loaded as ES module: `<script src="scripts.js" type="module">`
 - Expanding from initial 4-track proof of concept to full 11-track release
 - Interactive elements vary per track (mute buttons, faders, one-shot triggers)
