@@ -307,15 +307,16 @@ Fixed with `max-height: 100%` on the strip — what the CSS comment there always
 ("as tall as fits"). Safari on the mini is bit-for-bit unchanged; iPad portrait goes from
 324px faders with 10px clearance to 267px with 68px.
 
-**Accepted residuals on iOS Firefox (won't fix — minority shell, and Gustav's call):**
-- **Shorter faders.** Firefox leaves ~610px of viewport against Safari's ~693, so once the
-  strip can't overflow there is simply less room. The old look was the overlap.
-- **Controls sit proportionally lower** on every track. **Pre-existing, unrelated to the
-  clamp** — `.track-area` has a fixed `padding-top: 80px` whatever the height, so on a
-  shorter viewport it eats a larger share. If it ever matters, the knob is a
-  `@media (max-height: 650px)` block reducing that padding: it would raise the controls and
-  hand the fader row ~30px back, and it cannot reach Safari on the mini (693px), the iPad or
-  the desktop. Deliberately not done now — the layout is tuned and this is polish.
+**Both residuals resolved 2026-08-17 by trimming the padding** (the knob described below was
+taken up once Android showed the same symptom): `@media (max-height: 640px)` sets
+`.track-area`'s `padding-top` to 48px. It was a fixed cost the card can't afford on a cramped
+viewport — it held the controls low *and* starved the fader row, since the faders clamp to
+whatever height is left. One change gives both back:
+- Android Chrome 360x620: faders **128px → 160px**, controls rise 32px.
+- iOS Firefox ~375x610: faders **107px → 139px**, controls rise 32px.
+- The lyric line doesn't move (bottom-anchored), so clearance is unchanged at 50px.
+- **iPhone 13 mini in Safari (693px) is above the threshold and untouched** — padding still
+  80px, faders still 176px. iPad and desktop are nowhere near it.
 
 **Observation, not acted on:** `max-height: 780px` also caps the card on phones *taller*
 than 780 px of viewport (iPhone 13 mini is ~712 px so it fills; a 14 Pro Max would leave

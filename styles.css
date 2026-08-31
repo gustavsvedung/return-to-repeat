@@ -677,6 +677,21 @@ footer p {
     }
 }
 
+/* Cramped viewports (Android Chrome ~620px, iOS Firefox ~610px — both keep a
+   permanent toolbar where Safari doesn't). The 80px above the controls is a
+   fixed cost the card can't afford here: it holds the buttons low AND starves
+   the fader row, since the faders clamp to whatever height is left. Trimming it
+   gives both back at once — at 360x620 the faders go 128px to 160px and the
+   controls rise 32px, with the lyric line unmoved (it's bottom-anchored).
+
+   640px threshold: iPhone 13 mini in Safari sits comfortably above it, so the
+   device most listeners will use keeps the spacing it was tuned with. */
+@media (max-height: 640px) {
+    .track-area {
+        padding-top: 48px;
+    }
+}
+
 /* Narrow phones (Android 360px and under). At 2.4rem "RETURN TO REPEAT" needs
    344px of line but only 332px is available at a 360px viewport, so it wraps to
    a third line and eats ~41px of height the card can't spare — which is what
