@@ -66,7 +66,7 @@ vendor/               self-hosted dependencies
   be public; private Pages needs GitHub Pro.) Kept private during development so the
   MP3s aren't trivially scrapable until release.
 
-## Status (2026-08-17)
+## Status (2026-08-31)
 
 Post-launch-prep bug pass complete. All playback-affecting bugs are fixed and
 device-verified (AudioContext interruption recovery, fast-skip/Track 11 loading race,

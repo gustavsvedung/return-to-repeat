@@ -216,7 +216,7 @@ destination: iOS must resample the live stream and reconfigure the audio unit mi
 which is what we hear. Also explains the original "sometimes clean" — that was the sessions
 where the speaker was connected before load.
 
-**Chromecast result (macOS Chrome, 2026-08-17) — platform, won't fix.** Re-tested across
+**Chromecast result (macOS Chrome, 2026-08-24) — platform, won't fix.** Re-tested across
 several tracks at both 44.1 and 48 kHz: the gaps/stutter are present in every case, random,
 and unrelated to the material or to user interaction. That rules out our side of it — a fault
 tied to audio-thread load would track the heavy configurations (Track 7 with all three drones)
@@ -295,7 +295,7 @@ Credits backdrop still covers the full viewport and the window still centres on 
 Track 7's faders return exactly the value aimed at; Track 5's strip resolves every button
 and slides correctly.
 
-**Follow-up fix (2026-08-17): fader strip could paint over the lyric line.**
+**Follow-up fix (2026-08-24): fader strip could paint over the lyric line.**
 `.fader-strip` had a fixed height (15rem, 11rem below 700px) while its flex row only gets
 what's left over. The row centres and doesn't clip, so on a short viewport the strip
 overflowed and painted across the tagline. Reported on **iOS Firefox** (iPhone 13 mini) but
@@ -307,7 +307,7 @@ Fixed with `max-height: 100%` on the strip — what the CSS comment there always
 ("as tall as fits"). Safari on the mini is bit-for-bit unchanged; iPad portrait goes from
 324px faders with 10px clearance to 267px with 68px.
 
-**Both residuals resolved 2026-08-17 by trimming the padding** (the knob described below was
+**Both residuals resolved 2026-08-31 by trimming the padding** (the knob described below was
 taken up once Android showed the same symptom): `@media (max-height: 640px)` sets
 `.track-area`'s `padding-top` to 48px. It was a fixed cost the card can't afford on a cramped
 viewport — it held the controls low *and* starved the fader row, since the faders clamp to
@@ -331,7 +331,7 @@ same `max-height: 640px` block: smaller than the padding, so headroom can't go n
 than 780 px of viewport (iPhone 13 mini is ~712 px so it fills; a 14 Pro Max would leave
 ~50 px). Pre-existing, unrelated to this fix, and needs a real device to judge.
 
-### G. Narrow viewports (Android 360px) — header wrap cascaded into overlaps — **[x] FIXED (2026-08-17)**
+### G. Narrow viewports (Android 360px) — header wrap cascaded into overlaps — **[x] FIXED (2026-08-31)**
 
 Found in the first **Android** pass (Samsung Galaxy Xcover 5, Android 14, Chrome — 360x~620
 viewport). Basic playback and all interactive controls worked; the problem was purely layout.
@@ -401,7 +401,7 @@ every cramped viewport — Android, the old SE, *and* the iOS Firefox spacing Gu
 while being unable to reach the mini in Safari (693px), the iPad or the desktop. Not done:
 it's a change to tuned spacing and should be a deliberate call, not a side effect.
 
-### H. Animal icons speckled on phones — **[x] FIXED (2026-08-17)**
+### H. Animal icons speckled on phones — **[x] FIXED (2026-08-31)**
 
 Reported on Android Chrome (flute birds, Track 5) and iOS (the horse, Track 4): faint dots
 and bands in the empty space around each animal, varying by device, absent on desktop.
@@ -423,7 +423,7 @@ in git history.
 **Verified:** Gustav on both phones — resampled better or indistinguishable, with only the
 original horse still looking glitchy.
 
-**Residual (2026-08-17): Track 5's flute birds still speckle on Android, not on iOS.** Those
+**Residual (2026-08-31): Track 5's flute birds still speckle on Android, not on iOS.** Those
 are the only icons drawn as a **CSS mask** with a colour behind them, rather than as an
 `<img>`; the resampling fixed the `<img>` path everywhere but Android's mask rasterisation
 still shows artifacts. If it's worth another pass, the fix is probably to stop masking at
@@ -433,7 +433,7 @@ largest non-audio payload on the page.
 ### I. Background audio doesn't survive backgrounding on iOS — **platform limit, documented**
 
 The PWA handover notes claimed Add to Home Screen already gave background audio "somewhat by
-accident". **Measured on the installed app (iPhone 13 mini, 2026-08-17): it doesn't.**
+accident". **Measured on the installed app (iPhone 13 mini, 2026-08-31): it doesn't.**
 Switching apps or locking the screen kills the audio; it resumes on return.
 
 **Why:** on iOS, a Web Audio `AudioContext` is suspended when the page goes to the background.
@@ -444,7 +444,7 @@ Standalone display doesn't change that; it's the audio session, not the browser 
 The resume-on-return is *our* code working as designed (Cluster A: `resumeAfterInterruption`
 on `visibilitychange`), so the failure is graceful rather than the old freeze.
 
-**Android is fine** (verified on the installed app and in Chrome, 2026-08-17): background
+**Android is fine** (verified on the installed app and in Chrome, 2026-08-31): background
 audio survives app-switch and screen-off there. So this is an **iOS limitation, not a PWA
 one** — Android doesn't suspend the context the same way.
 
@@ -458,7 +458,7 @@ would enable lock-screen transport controls via MediaSession, so those two would
 
 ### J. Renderer crash on rapid skipping (Android) — **OPEN, highest-severity item left**
 
-Reported 2026-08-17 on the Samsung Galaxy Xcover 5, in **both** Chrome and the installed app:
+Reported 2026-08-31 on the Samsung Galaxy Xcover 5, in **both** Chrome and the installed app:
 rapidly tapping Next or Shuffle can take the whole page down to Chrome's "Aw, snap" error
 screen. Not seen on iOS or macOS so far.
 
@@ -488,7 +488,7 @@ memory-constrained devices (`navigator.deviceMemory`).
 **Severity note:** every other open item is cosmetic. This one loses the listener's session.
 It should be the next thing looked at, ahead of any polish.
 
-### Orientation on phones — **[x] handled in CSS (2026-08-17); manifest still open**
+### Orientation on phones — **[x] handled in CSS (2026-08-24); manifest closed 2026-08-31**
 
 Gustav wants the app-like layout **never in landscape on phones** (iPad landscape is fine).
 In landscape the card clips: it's portrait by design, so the controls fall off the bottom.
@@ -520,7 +520,7 @@ emulation (the desktop guard), and the border follows the light/dark track backg
   which likely carries iOS regardless. Caveat if it does work: a blanket `portrait` would
   also lock the **iPad** PWA to portrait, so use `any` and let the CSS hint do the scoping.
 
-**Decided (2026-08-17):** `manifest.json` ships `"orientation": "any"` for exactly that
+**Decided (2026-08-31):** `manifest.json` ships `"orientation": "any"` for exactly that
 reason — iPad landscape is worth keeping, and the CSS hint already declines phone landscape
 on every browser rather than only on installed Android.
 

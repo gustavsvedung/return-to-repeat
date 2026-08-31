@@ -49,7 +49,7 @@ bucket.
 - [x] iPhone 13 mini · Safari — **FULL** (Core + Audio paths + known issues)
 - [x] iPad Air · Safari — Layout + interactive spot-check
 - [x] iPhone · Firefox (AirPlay) + Chrome (quick) — shell spot-checks
-- [x] Android · Chrome — Core + Layout *(Samsung Galaxy Xcover 5, Android 14, 2026-08-17)*
+- [x] Android · Chrome — Core + Layout *(Samsung Galaxy Xcover 5, Android 14, 2026-08-31)*
 
 ---
 
@@ -144,16 +144,16 @@ Service workers need a **secure context**, so this pass can't run over
 `http://<LAN-IP>:8000` — only over HTTPS (GitHub Pages) or `localhost`. The manifest and
 Add to Home Screen do work over plain http on iOS; the Android install prompt doesn't.
 
-- [x] **macOS Chrome on `http://localhost:8000`** (2026-08-17) — manifest parses, all three
+- [x] **macOS Chrome on `http://localhost:8000`** (2026-08-31) — manifest parses, all three
   icons render, `sw.js` **activated and running**, and Chrome offers Install. The only
   warnings ask for manifest `screenshots` to unlock the richer install dialog — cosmetic.
-- [x] **iPhone, Safari** (2026-08-17) — Add to Home Screen works; installs with the right
+- [x] **iPhone, Safari** (2026-08-31) — Add to Home Screen works; installs with the right
   icon and name and launches standalone. **No layout issues** in the larger branch.
 - [x] **iPhone, installed** — rotate hint still appears in landscape, so the CSS carries
   orientation as predicted.
 - [ ] ~~background audio in standalone~~ — **doesn't work; platform limit, see BUGS.md I.**
 - [x] **Android Chrome** — status bar picks up the per-track `theme-color`.
-- [x] **Android Chrome, after the Pages deploy** (2026-08-17) — install prompt offered, app
+- [x] **Android Chrome, after the Pages deploy** (2026-08-31) — install prompt offered, app
   installs and launches standalone. **Background audio works on Android**, unlike iOS.
 - [x] **Both, after deploy** — audio streams normally from the Pages URL on Android and iPhone.
 
@@ -163,7 +163,7 @@ on Android (BUGS.md H residual).
 
 ## Before release: one regression pass on the current build
 
-Everything below has been tested, but mostly *change by change*. The 2026-08-17 session
+Everything below has been tested, but mostly *change by change*. The 2026-08-31 session
 replaced foundations — the AudioContext sample rate, every third-party dependency, the whole
 icon system, the artwork, and the layout breakpoints. Run the **Core pass** above once,
 start to finish, on the iPhone, against the build you intend to ship. Twenty minutes.
