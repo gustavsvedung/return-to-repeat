@@ -401,6 +401,29 @@ every cramped viewport — Android, the old SE, *and* the iOS Firefox spacing Gu
 while being unable to reach the mini in Safari (693px), the iPad or the desktop. Not done:
 it's a change to tuned spacing and should be a deliberate call, not a side effect.
 
+### H. Animal icons speckled on phones — **[x] FIXED (2026-08-17)**
+
+Reported on Android Chrome (flute birds, Track 5) and iOS (the horse, Track 4): faint dots
+and bands in the empty space around each animal, varying by device, absent on desktop.
+
+**Root cause: 1-bit artwork downscaled at runtime.** Measured with a canvas alpha histogram:
+`bird/horse/cat/eel.png` had **0% partial-alpha pixels** — every pixel fully opaque or fully
+transparent, so the engraving is a hard dot screen. Displayed at 44–57px on a 2–3x screen,
+that dot grid beats against the pixel grid: moiré. Device-dependent because it depends on the
+exact scale factor, and worst on the horse (1254px source down to 57px, the steepest
+downscale). Nothing to do with the CSS mask or the rem→px change that landed the same day.
+
+**Fix:** do the downsampling once, offline, with proper filtering (`sips -Z`) instead of
+leaving it to a mobile GPU on every paint. bird/horse/cat at **256px**, eel at **384px**
+(it displays at 112px, so 3x needs 336). They now carry real antialiasing — bird 0% → 4.9%
+partial alpha, horse 0% → 19.9% — which is what stops the beating. Sized so even a 3x screen
+never upscales them. Filenames unchanged, so no code changed; the 550–1254px originals remain
+in git history.
+
+**Verified:** Gustav on both phones — resampled better or indistinguishable, with only the
+original horse still looking glitchy. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
+largest non-audio payload on the page.
+
 ### Orientation on phones — **[x] handled in CSS (2026-08-17); manifest still open**
 
 Gustav wants the app-like layout **never in landscape on phones** (iPad landscape is fine).
