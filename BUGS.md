@@ -456,6 +456,10 @@ emulation (the desktop guard), and the border follows the light/dark track backg
   which likely carries iOS regardless. Caveat if it does work: a blanket `portrait` would
   also lock the **iPad** PWA to portrait, so use `any` and let the CSS hint do the scoping.
 
+**Decided (2026-08-17):** `manifest.json` ships `"orientation": "any"` for exactly that
+reason — iPad landscape is worth keeping, and the CSS hint already declines phone landscape
+on every browser rather than only on installed Android.
+
 ## Design decisions
 
 - [x] **[Omni 3b] Track controls work before playback starts.** DECIDED: stateful

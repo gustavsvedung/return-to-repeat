@@ -138,6 +138,25 @@ playing through a mid-track output switch**.
 - [ ] **iPad:** card is **top-anchored (~80px), not dead-center**; title doesn't wrap; credits window centers over the card
 - [ ] **Desktop (all 3 engines):** card centered/near-top; title doesn't wrap; surround is plain track color (no dim/border); check Chrome vs Firefox vs Safari agree
 
+## PWA / installed-app pass (after deploy)
+
+Service workers need a **secure context**, so this pass can't run over
+`http://<LAN-IP>:8000` — only over HTTPS (GitHub Pages) or `localhost`. The manifest and
+Add to Home Screen do work over plain http on iOS; the Android install prompt doesn't.
+
+- [ ] **macOS Chrome on `http://localhost:8000`** — DevTools > Application: manifest parses
+  with no errors, all three icons resolve, service worker registers and activates.
+- [ ] **iPhone, Safari** — Share > Add to Home Screen. Launches with no browser chrome, right
+  icon and name. **Re-check the layout**: standalone adds ~100px of viewport, which crosses
+  the 700px breakpoint into the larger branch.
+- [ ] **iPhone, installed** — does background audio still survive an app switch / lock?
+  (Reported as a side effect of Add to Home Screen before any manifest existed.)
+- [ ] **iPhone, installed** — does iOS honour `orientation`? Expected **no**; the CSS rotate
+  hint should carry it. Confirm the hint still appears in the installed app.
+- [ ] **Android Chrome** — an install prompt is offered; the installed app launches
+  standalone; the status bar picks up the per-track `theme-color`.
+- [ ] **Both** — audio still streams normally in the installed app (nothing is cached).
+
 ## Confirm the known issues (investigate bucket)
 - [ ] **Omni 1** — Play, then **lock the iPhone (or switch apps) for ~30–60s**, return: does audio resume, or can you resume it? (Safari iOS). Watch console for AudioContext warnings.
 - [ ] **Omni 4 / 5** — Tap **Next very rapidly 5–6×**: does it overshoot/skip extra tracks, land on the wrong one, or stutter loading?

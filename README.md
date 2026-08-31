@@ -81,8 +81,9 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
   system output to the speaker instead); iOS Firefox unchanged and not pursued.
 - **F** — iPad portrait **fixed** (the card scales up on tall large viewports); worth a look
   on the actual iPad.
-- **PWA** — installable app. Phone landscape is already handled in CSS (a "turn the phone
-  upright" overlay); the manifest's `orientation` is a bonus on Android and unverified on iOS.
+- **PWA** — `manifest.json`, icons and iOS meta tags are **in place**; `sw.js` is registered
+  purely so Android offers to install (it caches nothing — streaming is deliberate). Needs
+  HTTPS to verify, so it's gated on the Pages deploy; see the PWA pass in TESTING.md.
 - ~~Android smoke test~~ **done** (Samsung Galaxy Xcover 5, Android 14) — core functions all
   worked; the layout issues it surfaced are fixed and logged as BUGS.md G.
 

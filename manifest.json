@@ -1,0 +1,31 @@
+{
+  "name": "Return to Repeat",
+  "short_name": "Return to Repeat",
+  "description": "An interactive album by Gus By Heart. The player responds to time, season and listening history — the album reveals itself on its own terms.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E7E1D3",
+  "theme_color": "#E7E1D3",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

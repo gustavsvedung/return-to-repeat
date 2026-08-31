@@ -16,6 +16,19 @@ import {
   debugStorage
 } from './storage.js';
 
+// --- Service worker ---
+// Registered only so Chrome on Android offers "Install app"; sw.js caches
+// nothing (see the comment in that file). Fails quietly where it can't run —
+// service workers need a secure context, so over http://<LAN-IP>:8000 there is
+// simply no worker, which changes nothing about how the player behaves.
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      console.warn('Service worker registration skipped', err);
+    });
+  });
+}
+
 // --- State ---
 
 let currentTrackIndex = 0;
@@ -148,6 +161,11 @@ function updateTrackDisplay(trackIndex) {
   // Locked tracks show their own colour, slightly dimmed
   const bgColor = locked ? dimColor(track.color, 0.18) : track.color;
   body.style.backgroundColor = bgColor;
+  // Keep the OS chrome in step with the track. Android colours the status bar
+  // from this; installed to the home screen it makes the album feel like one
+  // surface rather than a page inside something else.
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.setAttribute('content', bgColor);
   const lightUI = getLuminance(bgColor) < 0.28 ? ' light-ui' : '';
   const lockedClass = locked ? ' locked' : '';
   container.className = `container track-${track.id}${lightUI}${lockedClass}`;
