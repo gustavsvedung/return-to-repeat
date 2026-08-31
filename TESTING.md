@@ -49,7 +49,7 @@ bucket.
 - [x] iPhone 13 mini · Safari — **FULL** (Core + Audio paths + known issues)
 - [x] iPad Air · Safari — Layout + interactive spot-check
 - [x] iPhone · Firefox (AirPlay) + Chrome (quick) — shell spot-checks
-- [ ] Android · Chrome — Core + Layout *(if borrowed)*
+- [x] Android · Chrome — Core + Layout *(Samsung Galaxy Xcover 5, Android 14, 2026-08-17)*
 
 ---
 
@@ -175,3 +175,6 @@ I'll triage into BUGS.md.
 - Freeze bug confirmed when playing on airplay speaker and then turning speaker off by pressing off button on speaker (ios firefox)
 - Can't confirm bug three 1 (drifting vocals). Stem sync works. (ios firefox)
 - Can't confirm bug omni 1. audio resumes after returning from locked screen (ios firefox)
+- Core functions all fine — playback, transport, interactive controls. Layout broken: title
+  wraps to 3 lines, controls overlap the lyric line, faders squashed. (android 14 chrome,
+  Galaxy Xcover 5) → root-caused to the 360px header wrap, fixed; see BUGS.md G.

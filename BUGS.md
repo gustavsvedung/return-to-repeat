@@ -321,6 +321,35 @@ Fixed with `max-height: 100%` on the strip — what the CSS comment there always
 than 780 px of viewport (iPhone 13 mini is ~712 px so it fills; a 14 Pro Max would leave
 ~50 px). Pre-existing, unrelated to this fix, and needs a real device to judge.
 
+### G. Narrow viewports (Android 360px) — header wrap cascaded into overlaps — **[x] FIXED (2026-08-17)**
+
+Found in the first **Android** pass (Samsung Galaxy Xcover 5, Android 14, Chrome — 360x~620
+viewport). Basic playback and all interactive controls worked; the problem was purely layout.
+
+**Root cause, as Gustav guessed:** at 2.4rem the line "RETURN TO REPEAT" needs **344px** but
+only **332px** is available at a 360px viewport, so the header wrapped to a **third line** and
+ate ~50px of height. Everything downstream is squeezed by exactly that much, and the squeeze
+surfaces as overlap because `.track-controls` is a flex item that shrinks below its content:
+on Track 3 it was shrunk to 76px while the bird toggle inside is 88px, so the button's bottom
+12px painted straight across the lyric line. Track 7's fader strip was down to 76px.
+
+**Fix:** width-scoped header sizing — `2.1rem` at `max-width: 374px`, `1.9rem` at
+`max-width: 339px`. Deliberately keyed to **width**, since that's what the wrap depends on, so
+the iPhone 13 mini (375px) and everything larger keep the sizes they were tuned at.
+
+**Verified on macOS Chrome at 360x620** (the device's geometry): header back to 2 lines (71px,
+was 122px), Track 3 clears the lyric line by 39px (was 12px *over* it), Track 7's faders go
+76px → 127px. Unchanged at 375x693 (mini, still 2.4rem), and at iPad portrait (still 2.2rem,
+2 lines).
+
+**Known residual — very short viewports still overlap slightly:** 360x560 (-21px) and
+320x568 (-6px, old iPhone SE). The device we actually tested sits at ~620 and is clean, but
+the margin isn't large. The lever is the same one noted under F: a `@media (max-height: 650px)`
+block trimming `.track-area`'s fixed `padding-top: 80px` to ~48px would hand ~32px back to
+every cramped viewport — Android, the old SE, *and* the iOS Firefox spacing Gustav noticed —
+while being unable to reach the mini in Safari (693px), the iPad or the desktop. Not done:
+it's a change to tuned spacing and should be a deliberate call, not a side effect.
+
 ### Orientation on phones — **[x] handled in CSS (2026-08-17); manifest still open**
 
 Gustav wants the app-like layout **never in landscape on phones** (iPad landscape is fine).

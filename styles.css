@@ -666,6 +666,26 @@ footer p {
     }
 }
 
+/* Narrow phones (Android 360px and under). At 2.4rem "RETURN TO REPEAT" needs
+   344px of line but only 332px is available at a 360px viewport, so it wraps to
+   a third line and eats ~41px of height the card can't spare — which is what
+   pushes the controls down onto the lyric line and squashes the faders.
+   Width-scoped, so the iPhone 13 mini (375px) and everything larger keep the
+   size they were tuned at. Placed after the short-screen block so it wins for
+   narrow phones at any height. Measured on a Samsung Galaxy Xcover 5. */
+@media (max-width: 374px) {
+    header h1 {
+        font-size: 2.1rem;   /* line needs ~301px of 332px */
+    }
+}
+
+/* Very narrow (old iPhone SE, small Androids at 320px): 2.1rem wraps again. */
+@media (max-width: 339px) {
+    header h1 {
+        font-size: 1.9rem;   /* line needs ~272px of 292px */
+    }
+}
+
 /* Tall screens (iPad portrait, large desktop windows): anchor the capped card
    near the top with a fixed offset instead of dead-centring it. Phones stay
    below this breakpoint, so their layout is untouched. The 900px floor keeps
