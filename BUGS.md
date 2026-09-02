@@ -430,6 +430,22 @@ still shows artifacts. If it's worth another pass, the fix is probably to stop m
 runtime — ship five pre-tinted PNGs, or an SVG silhouette — rather than to resample again. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
 largest non-audio payload on the page.
 
+### Icon choice (2026-08-31) — decided
+
+The installed app uses the **eel**; the browser tab keeps the abstract **loop mark**
+(`favicon.svg` / `favicon.ico`). Considered and rejected: the horse, which is the better
+picture but the weaker mark — wide, thin-legged, and it clots into a blob at icon size, plus
+it carries much more of the 1-bit halftone that caused H's moiré, and its maskable was
+over-inset so Android's crop would have left it small.
+
+**On the eel also being Track 11's icon** — deliberate, not an oversight. Track 11's eel is
+*blurred* until unlocked, so the sharp one on the home screen isn't recognisable as the same
+creature until you earn it, at which point the two converge. Keeping the loop mark on the tab
+means the eel stays scarce: it appears only on the home screen and on Track 11.
+
+Name kept as the full "Return to Repeat" — it fits on the iPhone home screen without
+truncating, so the shorter forms weren't needed.
+
 ### I. Background audio doesn't survive backgrounding on iOS — **platform limit, documented**
 
 The PWA handover notes claimed Add to Home Screen already gave background audio "somewhat by
