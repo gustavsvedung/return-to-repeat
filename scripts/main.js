@@ -27,6 +27,12 @@ let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   deferredInstallPrompt = event;
+  // This fires *after* DOMContentLoaded — Chrome waits for the manifest and for
+  // the service worker, and we register that one on `load`. So by the time we
+  // get here setUpInstallInvite() has already run and bailed with empty hands.
+  // Run it again now that there's something to offer. It's idempotent, and it
+  // no-ops before the DOM exists, so the ordering doesn't matter.
+  setUpInstallInvite();
 });
 
 // --- Service worker ---
@@ -205,6 +211,10 @@ function setUpInstallInvite() {
   text.textContent = 'Works even better installed.';
   button.hidden = false;
   invite.hidden = false;
+
+  // beforeinstallprompt can fire more than once, and it calls us each time.
+  if (button.dataset.wired) return;
+  button.dataset.wired = 'yes';
 
   button.addEventListener('click', async () => {
     const prompt = deferredInstallPrompt;

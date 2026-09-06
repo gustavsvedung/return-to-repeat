@@ -244,26 +244,29 @@ them in a while:
 - [ ] **NoSleep** — screen still stays awake during playback
 - [ ] **Credits window** opens, centres over the card, closes on outside click
 
-## After going live: the network pass
+## After going live: the network pass — **[x] COMPLETE (2026-09-06)**
 
-Most of what we tested is origin-independent and carries over — layout, fonts, icons,
-interaction, audio routing, the 44.1 kHz pin, the PWA. What does **not** carry is anything
-that depends on how fast bytes arrive. The LAN serves 178 MB from two metres away; the
-internet won't.
+Run against a temporary GitHub Pages deploy at `gustavsvedung.github.io/return-to-repeat`
+(repo public for the duration, then closed again). Everything origin-independent — layout,
+fonts, icons, interaction, audio routing, the 44.1 kHz pin — had already passed on the LAN;
+this pass existed only for what depends on how fast bytes actually arrive.
 
-- [ ] **Cold first load** on each phone — how long to first audio, and does the spinner
-  behave the whole way through?
-- [ ] **Fast-skip under real latency** — the *highest-value check here*. Cluster B (stuck
-  spinner, fast-skip race) was a **timing** bug, and slow loads widen exactly the window it
-  lived in. Hammer Next over a slow connection; it's also related to the crash in BUGS.md J,
-  since both involve loads in flight. On desktop, use DevTools > Network > throttling
-  ("Slow 4G") rather than guessing.
-- [ ] **One listen on cellular**, not Wi-Fi — every test so far has been on Wi-Fi.
-- [ ] **PWA from the live URL** — install prompt on Android, Add to Home Screen on iOS,
-  standalone launch, audio streams.
-- [ ] **No third-party requests** — DevTools > Network, filter by domain: everything should
-  come from the site's own origin. This is the claim vendoring bought; worth confirming once
-  on the real deployment.
+| # | Check | Result |
+|---|---|---|
+| 1 | **Fast-skip under real latency** | **pass** — the one that mattered, given clusters B and J were both timing bugs |
+| 2 | **Cold first load** (Android Chrome, iOS Safari) | **pass** — ~3–4 s to first audio on the iPhone 13 mini, roughly double on the Xcover 5 |
+| 3 | **One listen on cellular** (iPhone, 5G) | **pass** |
+| 4 | **PWA from the live URL** | **pass** — Chrome's install sheet shows the manifest screenshots correctly; see the defect below |
+| 5 | **Zero third-party requests** (macOS Firefox) | **pass** — every request served from the site's own origin, confirming what vendoring bought |
+
+The Xcover 5 is consistently slower to load than the iPhone on the same Wi-Fi. Expected —
+older radio, slower decode — and it stayed within the spinner's tolerance throughout, so
+it's a characteristic rather than a finding.
+
+**One defect surfaced here:** the install invitation never appeared on Android (BUGS.md K).
+Found only because the live deploy is the first place Chrome will fire
+`beforeinstallprompt` at all — it needs HTTPS, so no amount of LAN testing could have
+caught it.
 
 **Caching, for later.** `no_cache_server.py` sends no-store on everything; GitHub Pages sends
 its own cache headers. Repeat visits get faster, but after release a listener can hold stale

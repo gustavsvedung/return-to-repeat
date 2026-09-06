@@ -61,12 +61,24 @@ vendor/               self-hosted dependencies
 
 - **Repo:** `github.com/gustavsvedung/return-to-repeat` — currently **private**.
 - **Going live:** flip the repo to **public**, then Settings → Pages → deploy from
-  `main`. The site is root-level static, so it serves as-is at
-  `gustavsvedung.github.io/return-to-repeat`. (Free GitHub Pages requires the repo to
-  be public; private Pages needs GitHub Pro.) Kept private during development so the
-  MP3s aren't trivially scrapable until release.
+  `main`. Every path in the project is relative (`start_url: "."`, `href="styles.css"`,
+  `register('sw.js')`), so the site serves unchanged both at
+  `gustavsvedung.github.io/return-to-repeat` and at a root custom domain — nothing to
+  rewrite when the domain lands. `.nojekyll` turns off Pages' Jekyll pass. (Free GitHub
+  Pages requires the repo to be public; private Pages needs GitHub Pro.) Kept private
+  during development so the MP3s aren't trivially scrapable until release.
+- **Planned home:** `returntorepeat.gusbyheart.se`. **Set the custom domain only at
+  release, not during a temporary window** — pointing DNS at Pages and then turning Pages
+  off leaves a dangling CNAME, and the subdomain can be claimed by anyone who adds it to
+  their own Pages repo. If it ever needs setting up early, verify the domain for the
+  GitHub account first (Settings → Pages → Verified domains).
+- **Two things to weigh before making the repo public for good.** The docs in this repo —
+  `PLANNING.md`, `ARCHITECTURE.md`, `tracks.js` — spell out every unlock condition,
+  variation trigger and hidden element, so publishing the code publishes the album's
+  secrets next to it. And Pages soft-limits at 100 GB/month, which at ~178 MB per full
+  listen is roughly 560 complete plays a month before GitHub gets in touch.
 
-## Status (2026-08-31)
+## Status (2026-09-06)
 
 Post-launch-prep bug pass complete. All playback-affecting bugs are fixed and
 device-verified (AudioContext interruption recovery, fast-skip/Track 11 loading race,
@@ -88,13 +100,19 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
 - **Renderer crash on rapid skipping** — **fixed and device-verified** (loads are queued, so
   a superseded load no longer decodes ~500 MB it will throw away); BUGS.md J.
 
-**No open defects, and the pre-release device pass is complete** (2026-09-06: macOS Safari +
-Firefox, iPhone 13 mini, Samsung Galaxy Xcover 5, iPad Air — including album completion
-firing for real). The install invitation is built.
+**No open defects. Both test passes are complete.** The pre-release device pass on
+2026-09-06 (macOS Safari + Firefox, iPhone 13 mini, Samsung Galaxy Xcover 5, iPad Air,
+including album completion firing for real), and the post-deploy network pass the same day
+against a temporary Pages deploy — cold load, fast-skip under real latency, a listen on 5G,
+the Android install prompt showing the manifest screenshots, and zero third-party requests
+confirmed on a real origin. See [TESTING.md](TESTING.md).
 
-**All that remains is the deploy** and the post-deploy network pass — cold load, fast-skip
-under real latency, one listen on cellular, and the Android install prompt showing the
-manifest screenshots. See [TESTING.md](TESTING.md).
+That pass surfaced exactly one defect, now fixed (BUGS.md K): the install invitation could
+never appear on Android, because `beforeinstallprompt` needs a secure context and every
+previous test ran over plain `http://` on the LAN. It's the reminder that a local rig can't
+see everything.
+
+**The player is finished. What remains is a decision, not a task** — see below.
 - ~~Android smoke test~~ **done** (Samsung Galaxy Xcover 5, Android 14) — core functions all
   worked; the layout issues it surfaced are fixed and logged as BUGS.md G.
 

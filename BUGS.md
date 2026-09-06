@@ -566,6 +566,36 @@ stems), Track 1 is 92 MB. Normal playback of Track 6 while preloading Track 7 is
 before anyone touches a button. Skipping the preload on low-memory devices
 (`navigator.deviceMemory <= 4`) would cost seamless transitions there but bound the total.
 
+### K. Install invitation never appeared on Android — **[x] FIXED (2026-09-06)**
+
+Found during the post-deploy network pass: on Android Chrome the NOTES panel showed no
+invitation to install, though the iOS sentence had been working since we built it.
+
+**Root cause — an ordering miss, not a race.** The Android branch of `setUpInstallInvite()`
+returns early unless `deferredInstallPrompt` is already in hand. That's set by
+`beforeinstallprompt`, which Chrome fires only after it has fetched the manifest *and* seen
+a service worker register — and `main.js` registers the worker on `load`. But
+`setUpInstallInvite()` is called from `DOMContentLoaded`, which always fires first. So the
+prompt was reliably still `null` at the moment we checked for it. The Android path was dead
+code from the day it was written; it could never have fired once.
+
+**Why no earlier test could have caught it.** `beforeinstallprompt` requires a secure
+context. Every previous test ran over `http://<LAN-IP>:8000`, where Chrome never fires the
+event at all — so the branch was unreachable on the LAN by construction, and the first
+HTTPS deploy was the earliest possible moment to see it. Worth remembering: anything gated
+on a secure context is invisible to the local test rig.
+
+**Fix.** The `beforeinstallprompt` handler now calls `setUpInstallInvite()` again after
+stashing the event, so the invitation reveals itself whenever the prompt actually turns up.
+The function no-ops if the DOM isn't ready, so the two orderings are both safe, and the
+click handler is guarded with a `data-wired` flag because Chrome may fire the event more
+than once.
+
+**Verified** by dispatching a synthetic `beforeinstallprompt` locally: the invitation and
+its button go from hidden to visible with the right copy, and firing twice still wires the
+click handler once. The real Chrome prompt needs a live HTTPS origin to confirm end-to-end.
+
+
 ### Orientation on phones — **[x] handled in CSS (2026-08-24); manifest closed 2026-08-31**
 
 Gustav wants the app-like layout **never in landscape on phones** (iPad landscape is fine).
