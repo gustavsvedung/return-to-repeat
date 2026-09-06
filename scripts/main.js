@@ -192,7 +192,7 @@ function setUpInstallInvite() {
     || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
 
   if (isIOS) {
-    text.innerHTML = 'This album is happier on your home screen — '
+    text.innerHTML = 'Works even better installed – tap '
       + '<svg class="inline-icon"><use href="#icon-share"></use></svg> then “Add to Home Screen”.';
     invite.hidden = false;
     return;
@@ -202,7 +202,7 @@ function setUpInstallInvite() {
   // no point telling a desktop Firefox listener to install something it can't.
   if (!deferredInstallPrompt) return;
 
-  text.textContent = 'This album is happier on your home screen.';
+  text.textContent = 'Works even better installed.';
   button.hidden = false;
   invite.hidden = false;
 
@@ -216,7 +216,7 @@ function setUpInstallInvite() {
       const { outcome } = await prompt.userChoice;
       text.textContent = outcome === 'accepted'
         ? 'Added. Look for the eel.'
-        : 'This album is happier on your home screen.';
+        : 'Works even better installed.';
     } catch (e) {
       /* dismissed in a way the browser didn't report — leave the line as it is */
     }

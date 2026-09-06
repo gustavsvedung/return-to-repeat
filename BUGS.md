@@ -452,6 +452,24 @@ device where the problem was reported — it would only remove the escape hatch 
 where nobody complained. If pinch ever *does* need blocking on iOS, the mechanism is
 preventDefault on WebKit's non-standard `gesturestart`, which is worth doing only deliberately.
 
+### `hidden` was defeated by the button reset — **[x] FIXED 2026-09-06**
+
+The Android-only install button rendered on **iOS**, where it has no handler and does
+nothing — reported from the device, visible as the iOS sentence and the button showing
+together, which should never happen.
+
+**Cause:** the shared `button { display: flex; ... }` reset overrides the browser's built-in
+`[hidden] { display: none }`, so the `hidden` attribute silently does nothing on any
+`<button>`. Not a logic bug — `setUpInstallInvite()` never unhid it.
+
+The credits overlay hit this same trap earlier and got a targeted
+`.credits-overlay[hidden] { display: none }` rule. Rather than add a third patch, there's now
+one document-wide `[hidden] { display: none !important; }`, so any future element using the
+attribute behaves as expected.
+
+**Verified:** the button is `display: none` on the iOS path while the sentence shows; credits
+still open and close; the Android branch still reveals a working button.
+
 ### Icon choice (2026-09-02) — decided
 
 The installed app uses the **eel**; the browser tab keeps the abstract **loop mark**

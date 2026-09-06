@@ -56,6 +56,15 @@
     box-sizing: border-box;
 }
 
+/* The `hidden` attribute must win over our own display rules. The shared button
+   reset below sets `display: flex`, which silently defeats `hidden` on any
+   <button> — that's why the Android-only install button rendered on iOS too.
+   The credits overlay hit the same trap earlier and got its own rule; this one
+   covers the whole document so it can't happen a third time. */
+[hidden] {
+    display: none !important;
+}
+
 html, body {
     margin: 0;
     padding: 0;
