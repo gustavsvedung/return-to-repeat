@@ -430,7 +430,7 @@ still shows artifacts. If it's worth another pass, the fix is probably to stop m
 runtime — ship five pre-tinted PNGs, or an SVG silhouette — rather than to resample again. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
 largest non-audio payload on the page.
 
-### Icon choice (2026-08-31) — decided
+### Icon choice (2026-09-02) — decided
 
 The installed app uses the **eel**; the browser tab keeps the abstract **loop mark**
 (`favicon.svg` / `favicon.ico`). Considered and rejected: the horse, which is the better
