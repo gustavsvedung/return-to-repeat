@@ -197,7 +197,23 @@ Run against the shipping build after the load queue, the `[hidden]` fix, the roo
   (it claimed the locked Play button was at full opacity even against an injected
   `!important` rule, while a screenshot clearly showed it dimmed). Trust screenshots.
 
-## Before release: one regression pass on the current build
+## Pre-release device pass — **[x] COMPLETE (2026-09-06)**
+
+Run against the shipping build, after the load queue, the `[hidden]` fix, the root
+`touch-action` change, the install invitation and the resampled artwork. All passed:
+
+| device / engine | covered | result |
+|---|---|---|
+| macOS Safari + Firefox | icons render, playback, NOTES opens/closes (the cross-engine risk from the `[hidden]` and `touch-action` changes) | pass |
+| iPhone 13 mini, Safari | VU meter animating, NoSleep holding the screen awake, flute slide, fader drag, double-tap no longer zooms, install invitation in NOTES | pass |
+| iPhone 13 mini, Safari | **album completion** — tracks credited at 60s, completion fires, cycle resets | pass |
+| Samsung Galaxy Xcover 5, Chrome | VU, touch controls, general pass | pass |
+| iPad Air, Safari | layout after the CSS changes | pass |
+
+Plus the automated sweep below, run in the pane. **No open defects.** What remains is the
+deploy and the network pass, neither of which can be done from a LAN.
+
+## Superseded: the earlier plan for this pass
 
 Everything below has been tested, but mostly *change by change*. The 2026-08-31 session
 replaced foundations — the AudioContext sample rate, every third-party dependency, the whole

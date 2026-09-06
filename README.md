@@ -88,9 +88,13 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
 - **Renderer crash on rapid skipping** — **fixed and device-verified** (loads are queued, so
   a superseded load no longer decodes ~500 MB it will throw away); BUGS.md J.
 
-**No open defects.** What's left before release: an install invitation in the UI, the
-pre-release regression pass, the Pages deploy, and the post-deploy network pass — all in
-[TESTING.md](TESTING.md).
+**No open defects, and the pre-release device pass is complete** (2026-09-06: macOS Safari +
+Firefox, iPhone 13 mini, Samsung Galaxy Xcover 5, iPad Air — including album completion
+firing for real). The install invitation is built.
+
+**All that remains is the deploy** and the post-deploy network pass — cold load, fast-skip
+under real latency, one listen on cellular, and the Android install prompt showing the
+manifest screenshots. See [TESTING.md](TESTING.md).
 - ~~Android smoke test~~ **done** (Samsung Galaxy Xcover 5, Android 14) — core functions all
   worked; the layout issues it surfaced are fixed and logged as BUGS.md G.
 
