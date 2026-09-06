@@ -430,6 +430,26 @@ still shows artifacts. If it's worth another pass, the fix is probably to stop m
 runtime — ship five pre-tinted PNGs, or an SVG silhouette — rather than to resample again. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
 largest non-audio payload on the page.
 
+### Accidental zoom on the controls — **[x] FIXED 2026-09-06; needs a device check**
+
+Double-tapping the transport by mistake zoomed the page on iPhone.
+
+**Cause:** `touch-action: manipulation` was set on `body` only. `touch-action` is **not
+inherited**, so every element inside computed to `auto`; whether the browser walks up the
+ancestor chain to find body's value depends on scroll-container details that iOS handles its
+own way. It's now on the root (`html, body`), which removes the ambiguity.
+
+**Pinch is deliberately still allowed.** `manipulation` disables double-tap zoom and keeps
+pinch, which is the accessible escape hatch for anyone who needs to magnify — and far harder
+to trigger by accident than a double tap. The drag surfaces (fader strip, sample strip) keep
+their stricter `touch-action: none`; verified unchanged.
+
+**Rejected: `user-scalable=no` / `maximum-scale=1` in the viewport meta.** iOS Safari has
+ignored those since iOS 10 precisely to stop sites disabling zoom, so it wouldn't fix the
+device where the problem was reported — it would only remove the escape hatch on Android,
+where nobody complained. If pinch ever *does* need blocking on iOS, the mechanism is
+preventDefault on WebKit's non-standard `gesturestart`, which is worth doing only deliberately.
+
 ### Icon choice (2026-09-02) — decided
 
 The installed app uses the **eel**; the browser tab keeps the abstract **loop mark**

@@ -61,6 +61,17 @@ html, body {
     padding: 0;
     height: 100%;
     overflow: hidden;
+    /* Kills double-tap-to-zoom, which is easy to trigger by accident on the
+       transport. Set on the root, not just body: touch-action isn't inherited,
+       so on body alone every element inside computes to `auto` and whether the
+       browser walks up to find it depends on scroll-container details that iOS
+       treats its own way.
+
+       `manipulation` still permits pinch — deliberately. Pinch is the accessible
+       escape hatch for anyone who needs to magnify, and it's far harder to
+       trigger by mistake than a double tap. The drag surfaces (fader strip,
+       sample strip) set `touch-action: none` separately, which is stricter. */
+    touch-action: manipulation;
 }
 
 body {
@@ -71,7 +82,6 @@ body {
     font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: var(--ink);
     transition: background-color 0.3s ease;
-    touch-action: manipulation;
 }
 
 ul {
