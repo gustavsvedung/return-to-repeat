@@ -259,9 +259,34 @@ this pass existed only for what depends on how fast bytes actually arrive.
 | 4 | **PWA from the live URL** | **pass** — Chrome's install sheet shows the manifest screenshots correctly; see the defect below |
 | 5 | **Zero third-party requests** (macOS Firefox) | **pass** — every request served from the site's own origin, confirming what vendoring bought |
 
-The Xcover 5 is consistently slower to load than the iPhone on the same Wi-Fi. Expected —
-older radio, slower decode — and it stayed within the spinner's tolerance throughout, so
-it's a characteristic rather than a finding.
+### Why the Xcover 5 loads slower — measured, 2026-09-06
+
+It loads consistently slower than the iPhone on the same Wi-Fi, and it stayed within the
+spinner's tolerance throughout, so it's a characteristic rather than a defect. Worth
+recording *why*, because the obvious explanation is the wrong one.
+
+**Not the network.** Downloading a single stem directly on the Xcover, outside the app,
+completed in under a second. The radio is not the bottleneck.
+
+**It's `decodeAudioData`.** Timed against the real files (macOS, this Mac):
+
+| file | audio | fetch | decode | trim copy | decoded size |
+|---|---|---|---|---|---|
+| `01.mp3` (8.4 MB) | 4:34 | 36 ms | **1015 ms** | 17 ms | 92 MB |
+| `09A1.mp3` (5.2 MB) | 2:50 | 17 ms | **636 ms** | 9 ms | 57 MB |
+
+Decode is ~28x the fetch and ~60x the trim. Scale it by the four-to-fivefold gap you'd
+expect from a 2021 budget SoC, add parsing 375 KB of Tone.js and building the audio context
+on the same cores, and 7-8 s falls straight out. Nothing is wrong.
+
+**Decode cost scales with duration, not file size** — it produces float32 PCM, so 4:34 of
+stereo is 92 MB however well the MP3 compressed. The longest tracks are the slowest loads,
+and bitrate is irrelevant to it. This is the same fact as the cluster J memory pressure
+(track 6 decodes to 204 MB), seen from the other side; the two move together.
+
+**No JS-level fix exists.** It's native decoding, already off the main thread. The only real
+lever would be to stop waiting on `Tone.loaded()` for every stem before starting playback,
+which trades against the sample-lock that BUGS.md C exists to protect. Not worth it.
 
 **One defect surfaced here:** the install invitation never appeared on Android (BUGS.md K).
 Found only because the live deploy is the first place Chrome will fire
