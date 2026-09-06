@@ -85,8 +85,9 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
   Android (install prompt, tested via a temporary Pages deploy). `sw.js` caches nothing;
   streaming is deliberate. Background audio works on Android but **not on iOS** — a Web Audio
   limitation, not a PWA one (BUGS.md I).
-- **Open: renderer crash on rapid skipping (Android)** — BUGS.md J. The only non-cosmetic
-  item left, and the next thing to look at.
+- **Renderer crash on rapid skipping** — **fixed** (loads are queued, so a superseded load
+  no longer decodes ~500 MB it will throw away); BUGS.md J. Awaiting confirmation on the
+  Android device where it was found.
 - ~~Android smoke test~~ **done** (Samsung Galaxy Xcover 5, Android 14) — core functions all
   worked; the layout issues it surfaced are fixed and logged as BUGS.md G.
 

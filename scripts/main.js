@@ -37,6 +37,17 @@ let isPlaying = false;
 let isLoading = false;
 let loadGeneration = 0; // Increments on each load — used to cancel stale loads
 
+// Only one track may fetch+decode at a time. loadGeneration alone isn't enough:
+// its "am I still wanted?" check runs *after* `await load()`, so a superseded
+// load still pulls every file and decodes it before discovering it was
+// cancelled — and nothing can abort a decode already in flight. Six rapid Next
+// presses therefore allocated ~500 MB of buffers for one track actually needed,
+// which is what crashed the renderer on Android (BUGS.md J). Queuing means a
+// superseded load reaches its generation check *before* allocating anything and
+// costs nothing. Web Audio holds buffers as float32 stereo, so the numbers are
+// brutal: Track 6 alone is 204 MB decoded, Track 1 is 92 MB.
+let loadQueue = Promise.resolve();
+
 // Set when iOS suspends the audio context out from under us mid-playback
 // (device unplugged, another app grabs audio, screen sleeps). We pause the UI
 // honestly and use this to attempt a resume when the page becomes visible again.
@@ -240,6 +251,23 @@ async function handlePlayClick() {
   }
 }
 
+// NoSleep's enable() is promise-based and rejects if the page isn't visible —
+// the Wake Lock API refuses to hand out a lock to a backgrounded page. That's a
+// normal thing to happen (a queued load can finish after the listener switched
+// away), not an error worth surfacing, but uncaught it showed up as an
+// unhandled rejection. Keeping the screen awake is best-effort by nature.
+function enableNoSleep() {
+  if (!noSleep) return;
+  try {
+    const result = noSleep.enable();
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => { /* page not visible — nothing to keep awake */ });
+    }
+  } catch (e) {
+    /* older implementations throw synchronously */
+  }
+}
+
 async function loadAndPlayTrack(trackIndex) {
   const thisGeneration = ++loadGeneration;
 
@@ -249,7 +277,18 @@ async function loadAndPlayTrack(trackIndex) {
   // Show loading state
   setLoadingState(true);
 
+  // Take our place in the queue before doing anything expensive.
+  const previousLoad = loadQueue;
+  let releaseQueue;
+  loadQueue = new Promise(resolve => { releaseQueue = resolve; });
+
   try {
+    // Wait for any load already in flight, so two tracks never decode at once.
+    await previousLoad;
+    // Superseded while we waited — return before allocating a single buffer.
+    // This is the whole point of the queue.
+    if (loadGeneration !== thisGeneration) return;
+
     // Initialize audio context (iOS requirement)
     await initAudioContext();
     if (loadGeneration !== thisGeneration) return; // Cancelled
@@ -312,7 +351,7 @@ async function loadAndPlayTrack(trackIndex) {
     startVuMeter();
 
     // Enable NoSleep
-    noSleep.enable();
+    enableNoSleep();
 
     // Start listen timer
     startListenTimer(track.id);
@@ -328,6 +367,10 @@ async function loadAndPlayTrack(trackIndex) {
     console.error('Error loading track:', error);
     showErrorState();
   } finally {
+    // Hand the queue on, whether we loaded, bailed out or threw — otherwise a
+    // single failure would stall every later load behind it.
+    releaseQueue();
+
     // Only clear loading state if this is still the current load
     if (loadGeneration === thisGeneration) {
       setLoadingState(false);
@@ -350,7 +393,7 @@ async function togglePlayback() {
     // Apply any control changes made while paused, then fade in on resume
     applyControlIntent(stemPlayer);
     stemPlayer.start(true);
-    noSleep.enable();
+    enableNoSleep();
     startListenTimer(tracks[currentTrackIndex].id);
     startVuMeter();
   }
@@ -411,7 +454,7 @@ async function resumeAfterInterruption() {
     stemPlayer.start(true);
     isPlaying = true;
     audioInterruptedWhilePlaying = false;
-    if (noSleep) noSleep.enable();
+    enableNoSleep();
     startListenTimer(tracks[currentTrackIndex].id);
     startVuMeter();
     updatePlayButton();

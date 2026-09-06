@@ -472,7 +472,7 @@ interruption handling in Cluster A that took real device testing to get right. W
 revisiting only if background playback becomes a priority — and the same mechanism is what
 would enable lock-screen transport controls via MediaSession, so those two would be one job.
 
-### J. Renderer crash on rapid skipping (Android) — **OPEN, highest-severity item left**
+### J. Renderer crash on rapid skipping (Android) — **[x] FIXED 2026-09-06; awaiting device confirmation**
 
 Reported 2026-08-31 on the Samsung Galaxy Xcover 5, in **both** Chrome and the installed app:
 rapidly tapping Next or Shuffle can take the whole page down to Chrome's "Aw, snap" error
@@ -496,13 +496,34 @@ a second track ready. Rapid skipping puts several loads in flight at once, and `
 cancels the *logic* but not the fetch-and-decode already running — the memory is still
 allocated before the result is discarded. On a low-end Android renderer that's a plausible OOM.
 
-**Where to start:** measure peak `performance.memory` / decoded buffer totals while skipping;
-check that cancelled loads dispose their players immediately rather than at the next GC;
-consider serialising loads or aborting in-flight ones; consider not preloading on
-memory-constrained devices (`navigator.deviceMemory`).
+**Confirmed by measurement (macOS Chrome, 2026-09-06).** Six Next presses 120 ms apart
+started loads for **six different tracks — 11 files, ~504 MB of decoded audio — to play one**.
+`loadGeneration` was never the problem; its check runs *after* `await load()`, so a superseded
+load pulls and decodes everything before discovering it was cancelled, and nothing can abort a
+decode already in flight.
 
-**Severity note:** every other open item is cosmetic. This one loses the listener's session.
-It should be the next thing looked at, ahead of any polish.
+**Fix: a load queue** (`loadQueue`, `main.js`). A load takes its place in the queue before
+doing anything expensive and re-checks its generation *after* waiting, so a superseded load
+returns before allocating a single buffer. Only one track fetches and decodes at a time.
+
+**Measured after the fix, same burst:** 11 requests across 6 tracks → **2 requests across 2
+tracks** (~112 MB), landing on the same destination. A harder run — 15 presses 40 ms apart,
+mixing Next and Shuffle, crossing locked Track 11 — fetched **one track**, with no stuck
+spinner, playing and audible on arrival. That's the floor without abortable loads: whatever
+was already in flight when the burst began, plus the track you actually wanted.
+
+**Also fixed alongside:** `noSleep.enable()` returns a promise that rejects when the page
+isn't visible, and nothing caught it, so it surfaced as an unhandled rejection. The queue
+makes that more reachable — a queued load can now finish after the listener switched away.
+Now routed through `enableNoSleep()`, which treats it as best-effort.
+
+**Still to confirm on the Xcover 5**, since the crash was only ever reproduced there.
+
+**If it still crashes**, the next lever is the preloader: it deliberately holds a second track
+in memory, and the tracks are enormous decoded — **Track 6 alone is 204 MB** (two ~5-minute
+stems), Track 1 is 92 MB. Normal playback of Track 6 while preloading Track 7 is ~237 MB
+before anyone touches a button. Skipping the preload on low-memory devices
+(`navigator.deviceMemory <= 4`) would cost seamless transitions there but bound the total.
 
 ### Orientation on phones — **[x] handled in CSS (2026-08-24); manifest closed 2026-08-31**
 
