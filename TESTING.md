@@ -171,6 +171,32 @@ New findings from that pass, both logged: the renderer can crash on rapid skippi
 (**BUGS.md J** — highest-severity open item), and Track 5's masked flute birds still speckle
 on Android (BUGS.md H residual).
 
+## Pre-release sweep, automated part (macOS Chrome, 2026-09-06)
+
+Run against the shipping build after the load queue, the `[hidden]` fix, the root
+`touch-action` change and the install invitation. All passed:
+
+| check | result |
+|---|---|
+| T3 — four vocal toggles, LEDs, `?night=1` variation + tagline | pass |
+| T4 — horse toggle brings drums in | pass |
+| T5 — five flutes, monophonic, slide between them; pre-play press silent (Omni 3a) | pass |
+| T7 — `?fullmoon=1` three faders, note colours, **positions survive pause→play** | pass |
+| T9 — `?day=3` three cat buttons, radio-style (exactly one on) | pass |
+| T10 — `?plays10=15` loads `10B.mp3` | pass |
+| T11 — `?completions=2`: locked, blurred eel, no LED, no tagline, dimmed Play | pass |
+| Shuffle × 15 — never lands on locked Track 11 | pass |
+| Rapid skip × 15 mixing Next/Shuffle across Track 11 — no stuck spinner | pass |
+| localStorage — visit count, play counts, listen times all persisting | pass |
+| Console — no errors, no unhandled rejections | pass |
+
+**Two things this pass cannot judge**, both needing a real device:
+- **VU meter animation** — driven by `requestAnimationFrame`, which the headless pane
+  throttles; it reads as zero lit segments regardless.
+- **Anything about opacity** — `getComputedStyle` reports opacity unreliably in that pane
+  (it claimed the locked Play button was at full opacity even against an injected
+  `!important` rule, while a screenshot clearly showed it dimmed). Trust screenshots.
+
 ## Before release: one regression pass on the current build
 
 Everything below has been tested, but mostly *change by change*. The 2026-08-31 session
