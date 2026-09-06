@@ -430,7 +430,7 @@ still shows artifacts. If it's worth another pass, the fix is probably to stop m
 runtime — ship five pre-tinted PNGs, or an SVG silhouette — rather than to resample again. Side effect: `img/` drops from **1.8 MB to 236 KB**, the
 largest non-audio payload on the page.
 
-### Accidental zoom on the controls — **[x] FIXED 2026-09-06; needs a device check**
+### Accidental zoom on the controls — **[x] FIXED & verified on iPhone (2026-09-06)**
 
 Double-tapping the transport by mistake zoomed the page on iPhone.
 
@@ -443,6 +443,8 @@ own way. It's now on the root (`html, body`), which removes the ambiguity.
 pinch, which is the accessible escape hatch for anyone who needs to magnify — and far harder
 to trigger by accident than a double tap. The drag surfaces (fader strip, sample strip) keep
 their stricter `touch-action: none`; verified unchanged.
+
+**Verified on iPhone (2026-09-06):** double-tapping the controls no longer zooms.
 
 **Rejected: `user-scalable=no` / `maximum-scale=1` in the viewport meta.** iOS Safari has
 ignored those since iOS 10 precisely to stop sites disabling zoom, so it wouldn't fix the
@@ -492,7 +494,7 @@ interruption handling in Cluster A that took real device testing to get right. W
 revisiting only if background playback becomes a priority — and the same mechanism is what
 would enable lock-screen transport controls via MediaSession, so those two would be one job.
 
-### J. Renderer crash on rapid skipping (Android) — **[x] FIXED 2026-09-06; awaiting device confirmation**
+### J. Renderer crash on rapid skipping (Android) — **[x] FIXED & verified on the Xcover 5 (2026-09-06)**
 
 Reported 2026-08-31 on the Samsung Galaxy Xcover 5, in **both** Chrome and the installed app:
 rapidly tapping Next or Shuffle can take the whole page down to Chrome's "Aw, snap" error
@@ -537,7 +539,8 @@ isn't visible, and nothing caught it, so it surfaced as an unhandled rejection. 
 makes that more reachable — a queued load can now finish after the listener switched away.
 Now routed through `enableNoSleep()`, which treats it as best-effort.
 
-**Still to confirm on the Xcover 5**, since the crash was only ever reproduced there.
+**Confirmed on the Xcover 5 (2026-09-06):** rapid skipping no longer crashes it. That's the
+device the crash was found on and the only place it ever reproduced, so this is closed.
 
 **If it still crashes**, the next lever is the preloader: it deliberately holds a second track
 in memory, and the tracks are enormous decoded — **Track 6 alone is 204 MB** (two ~5-minute

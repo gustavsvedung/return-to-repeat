@@ -85,9 +85,12 @@ remaining open items live in **[BUGS.md](BUGS.md)**.
   Android (install prompt, tested via a temporary Pages deploy). `sw.js` caches nothing;
   streaming is deliberate. Background audio works on Android but **not on iOS** — a Web Audio
   limitation, not a PWA one (BUGS.md I).
-- **Renderer crash on rapid skipping** — **fixed** (loads are queued, so a superseded load
-  no longer decodes ~500 MB it will throw away); BUGS.md J. Awaiting confirmation on the
-  Android device where it was found.
+- **Renderer crash on rapid skipping** — **fixed and device-verified** (loads are queued, so
+  a superseded load no longer decodes ~500 MB it will throw away); BUGS.md J.
+
+**No open defects.** What's left before release: an install invitation in the UI, the
+pre-release regression pass, the Pages deploy, and the post-deploy network pass — all in
+[TESTING.md](TESTING.md).
 - ~~Android smoke test~~ **done** (Samsung Galaxy Xcover 5, Android 14) — core functions all
   worked; the layout issues it surfaced are fixed and logged as BUGS.md G.
 
