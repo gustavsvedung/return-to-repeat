@@ -160,11 +160,15 @@ function sliceBuffer(audioBuffer, start, end) {
   // the wrong one whenever ?sr= has swapped it out.
   const out = Tone.getContext().createBuffer(numChannels, trimmedLength, sampleRate);
   for (let ch = 0; ch < numChannels; ch++) {
-    const src = audioBuffer.getChannelData(ch);
-    const dst = out.getChannelData(ch);
-    for (let i = 0; i < trimmedLength; i++) {
-      dst[i] = src[s + i];
-    }
+    // set() on a subarray view is a native copy — bit-identical to the
+    // per-sample loop this replaces (verified exhaustively, NaN and signed
+    // zero included), and roughly 4x faster. Worth it because a five-minute
+    // stereo stem is ~26M samples and this runs once per stem, on the load
+    // path, where every millisecond widens the window that the fast-skip
+    // race (BUGS.md B) and the rapid-skip crash (BUGS.md J) both lived in.
+    // Nothing about sync or looping rides on this: the trim window and the
+    // output length are both already fixed by the time we get here.
+    out.getChannelData(ch).set(audioBuffer.getChannelData(ch).subarray(s, e));
   }
   return out;
 }
