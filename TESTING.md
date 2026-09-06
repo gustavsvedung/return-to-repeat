@@ -209,7 +209,22 @@ them in a while:
 
 - [ ] **T10** — `?plays10=5` vs `?plays10=15` still switch variation
 - [ ] **T11** — all three locked stages (`?completions=2` / `4` / `5`) and the eel effect
-- [ ] **Album completion** actually counts after a real listen (console)
+- [ ] **Album completion** actually counts after a real listen. Nothing logs per track —
+  only `Album completion #N achieved!` when a whole cycle lands. To watch progress, paste
+  this in the console (it reads live, so re-run it whenever):
+
+  ```js
+  (() => { const t = JSON.parse(localStorage.rtr_trackListenTime||'{}'), c = JSON.parse(localStorage.rtr_currentListenCycle||'{}'); return Object.fromEntries([...Array(10)].map((_,i)=>{ const id=String(i+1); return [id, { secs: t[id]||0, credited: c[id]===true }]; })); })()
+  ```
+
+  Every track at 60s or more should read `credited: true`; **8 of tracks 1–10** completes the
+  cycle. Confirmed working on iPhone 2026-09-06 (a track crossed 60s and flipped to credited
+  between two runs).
+
+  **Listen times are per cycle, not lifetime** — `resetCurrentListenCycle()` also calls
+  `resetTrackListenTimes()`, so both are wiped at every completion. Each completion therefore
+  costs ~8 minutes of real playback, and the five that unlock Track 11 cost ~40. Worth
+  knowing before concluding the gate is too soft: it isn't.
 - [ ] **NoSleep** — screen still stays awake during playback
 - [ ] **Credits window** opens, centres over the card, closes on outside click
 
