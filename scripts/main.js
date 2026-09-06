@@ -8,6 +8,7 @@ import { resolveSignals, initSession, setPreviousTrack } from './signals.js';
 import { StemPlayer, SamplePlayer, TrackPreloader, initAudioContext, getMeterLevel, setEffectIntensity, getAudioContextState, onAudioContextStateChange } from './stem-player.js';
 import {
   incrementVisitCount,
+  getVisitCount,
   incrementTrackPlayCount,
   addTrackListenTime,
   getTrackListenTime,
@@ -15,6 +16,18 @@ import {
   isTrackHeardInCycle,
   debugStorage
 } from './storage.js';
+
+// --- Install invitation ---
+// Chrome fires beforeinstallprompt when the app qualifies for installation, but
+// only once and only if we stop it showing its own banner. Stash it so the
+// invitation inside NOTES can fire a real one-tap install later. iOS has no
+// equivalent API — there the invitation is a sentence, not a button.
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+});
 
 // --- Service worker ---
 // Registered only so Chrome on Android offers "Install app"; sw.js caches
@@ -92,6 +105,20 @@ document.addEventListener('DOMContentLoaded', () => {
   initSession();
   incrementVisitCount();
 
+  // Debug: ?track=N opens straight on that track instead of Track 1. Saves
+  // pressing Next six times to reach Track 7 on a phone, and lets the manifest
+  // screenshots be taken of tracks that actually have controls.
+  const trackParam = parseInt(new URLSearchParams(window.location.search).get('track'), 10);
+  if (Number.isFinite(trackParam)) {
+    const index = tracks.findIndex(t => t.id === trackParam);
+    if (index >= 0) {
+      currentTrackIndex = index;
+      console.log(`🛠️ Debug: opening on track ${trackParam}`);
+    } else {
+      console.warn(`🛠️ Debug: no track ${trackParam}`);
+    }
+  }
+
   // Set up initial track display (no audio yet)
   updateTrackDisplay(currentTrackIndex);
 
@@ -118,6 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
     creditsOverlay.addEventListener('click', () => setCreditsOpen(false));
   }
 
+  setUpInstallInvite();
+
   // Fix 2: iOS suspends the audio context on interruption and never auto-resumes.
   // When that happens mid-playback, sync the UI to a paused state so the next Play
   // tap can resume it (initAudioContext in togglePlayback does the actual resume).
@@ -133,6 +162,66 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Return to Repeat initialized');
   debugStorage();
 });
+
+// --- Install invitation ---
+
+// Shown inside the NOTES window, never as a banner. Two conditions: the album
+// isn't already installed, and this isn't the listener's first visit — someone
+// who just arrived gets the album, not an ask. The wording differs by platform
+// because the mechanics do: Android can offer a real one-tap install, iOS can
+// only describe where the button is.
+function setUpInstallInvite() {
+  const invite = document.getElementById('install-invite');
+  const text = document.getElementById('install-invite-text');
+  const button = document.getElementById('install-button');
+  if (!invite || !text || !button) return;
+
+  const alreadyInstalled = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (alreadyInstalled) return;
+
+  // Second visit onwards. incrementVisitCount() has already run for this one.
+  if (getVisitCount() < 2) return;
+
+  // iPadOS reports itself as a Mac, so a Macintosh UA *with* touch points is the
+  // reliable tell for an iPad. Deliberately not navigator.platform: it's
+  // deprecated, and it keeps saying MacIntel under device emulation even when
+  // the user agent says Android, which made this branch fire on desktop Chrome.
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua)
+    || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+
+  if (isIOS) {
+    text.innerHTML = 'This album is happier on your home screen — '
+      + '<svg class="inline-icon"><use href="#icon-share"></use></svg> then “Add to Home Screen”.';
+    invite.hidden = false;
+    return;
+  }
+
+  // Elsewhere, only offer it if the browser actually supports installing —
+  // no point telling a desktop Firefox listener to install something it can't.
+  if (!deferredInstallPrompt) return;
+
+  text.textContent = 'This album is happier on your home screen.';
+  button.hidden = false;
+  invite.hidden = false;
+
+  button.addEventListener('click', async () => {
+    const prompt = deferredInstallPrompt;
+    if (!prompt) return;
+    deferredInstallPrompt = null;   // it can only be used once
+    button.hidden = true;
+    prompt.prompt();
+    try {
+      const { outcome } = await prompt.userChoice;
+      text.textContent = outcome === 'accepted'
+        ? 'Added. Look for the eel.'
+        : 'This album is happier on your home screen.';
+    } catch (e) {
+      /* dismissed in a way the browser didn't report — leave the line as it is */
+    }
+  });
+}
 
 // --- Luminance & UI Mode ---
 

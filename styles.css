@@ -671,6 +671,60 @@ footer p {
     text-decoration: none;
 }
 
+/* Install invitation inside the NOTES window. Deliberately quiet: separated by
+   a hairline rather than a box, and in the same EB Garamond as the credits it
+   sits under, so it reads as one more line of the album's own text rather than
+   an advertisement wearing the album's clothes. */
+.install-invite {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.install-invite p {
+    margin: 0;
+    opacity: 0.85;
+}
+
+/* The iOS share glyph, set inline in the sentence at the size of the text. */
+.install-invite .inline-icon {
+    width: 0.85em;
+    height: 0.85em;
+    fill: currentColor;
+    vertical-align: -0.08em;
+    margin: 0 0.1em;
+}
+
+/* Android's real install button — the credits window's own border language,
+   not a call-to-action colour. */
+.install-invite button {
+    margin-top: 14px;
+    padding: 8px 16px;
+    border: 2px solid rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+    background: transparent;
+    font-family: 'EB Garamond', serif;
+    font-size: 16px;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.install-invite button:active {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.container.light-ui .install-invite {
+    border-top-color: rgba(235, 230, 220, 0.3);
+}
+
+.container.light-ui .install-invite button {
+    border-color: rgba(235, 230, 220, 0.45);
+}
+
+.container.light-ui .install-invite button:active {
+    background: rgba(235, 230, 220, 0.12);
+}
+
 /* Light UI: lighten the window border to match the other controls */
 .container.light-ui .credits-window,
 .container.light-ui .rotate-hint p {

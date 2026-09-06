@@ -33,5 +33,28 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/narrow-1.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Track three — four vocal parts you bring in and out"
+    },
+    {
+      "src": "screenshots/narrow-2.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Track seven — three drones on faders"
+    },
+    {
+      "src": "screenshots/wide-1.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Return to Repeat"
+    }
   ]
 }

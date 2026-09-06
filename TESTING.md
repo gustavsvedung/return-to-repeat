@@ -76,6 +76,7 @@ bucket.
   | `unlock11=1` | Force-unlock Track 11 | Track 11 unlocked state |
   | `variation=X` | Force a specific variation | Any track |
   | `sr=48000` / `sr=native` | Override the 44.1 kHz context pin | AirPlay route-change distortion (BUGS.md E) |
+  | `track=N` | Open straight on track N | Any track, without pressing Next six times |
 
   Active overrides print to the console (`🛠️ Debug overrides active`).
 
@@ -156,6 +157,15 @@ Add to Home Screen do work over plain http on iOS; the Android install prompt do
 - [x] **Android Chrome, after the Pages deploy** (2026-08-31) — install prompt offered, app
   installs and launches standalone. **Background audio works on Android**, unlike iOS.
 - [x] **Both, after deploy** — audio streams normally from the Pages URL on Android and iPhone.
+
+**Install invitation** (added 2026-09-06 — lives inside the NOTES window, never as a banner):
+- [ ] **First-ever visit** — no invitation (it needs a second visit; clear site data to test).
+- [ ] **iPhone, Safari, second visit** — NOTES shows the line with the share glyph inline.
+- [ ] **iPhone, installed** — invitation is **gone** (it detects standalone).
+- [ ] **Android Chrome, second visit, over HTTPS** — NOTES shows an "Add to home screen"
+  button; tapping it opens Chrome's own install dialog, which should now show the
+  screenshots and description rather than a bare URL.
+- [ ] **Desktop Firefox** — nothing appears (it can't install, so it isn't asked to).
 
 New findings from that pass, both logged: the renderer can crash on rapid skipping
 (**BUGS.md J** — highest-severity open item), and Track 5's masked flute birds still speckle
@@ -243,4 +253,4 @@ I'll triage into BUGS.md.
 - Can't confirm bug omni 1. audio resumes after returning from locked screen (ios firefox)
 - Core functions all fine — playback, transport, interactive controls. Layout broken: title
   wraps to 3 lines, controls overlap the lyric line, faders squashed. (android 14 chrome,
-  Galaxy Xcover 5) → root-caused to the 360px header wrap, fixed; see BUGS.md G.
+  Galaxy Xcover 5) → root-caused to the 360px header wrap, fixed; see BUGS.md G. 
