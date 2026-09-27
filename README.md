@@ -116,6 +116,12 @@ see everything.
 - ~~Android smoke test~~ **done** (Samsung Galaxy Xcover 5, Android 14) — core functions all
   worked; the layout issues it surfaced are fixed and logged as BUGS.md G.
 
+**Parked for after release** (not defects, and nothing blocking): a real lock-screen *Now
+Playing* card on iOS, which the album currently has no version of because Web Audio creates no
+media session; and Track 5's flute birds, which still speckle on Android because they're the
+one control drawn as a runtime CSS mask. Both are written up in [BUGS.md](BUGS.md) with the
+reasoning and what each would cost.
+
 ## Documentation
 
 - **[BUGS.md](BUGS.md)** — bug triage, root causes, fixes, and open items. The working log.

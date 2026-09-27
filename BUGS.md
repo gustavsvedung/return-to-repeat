@@ -545,6 +545,39 @@ interruption handling in Cluster A that took real device testing to get right. W
 revisiting only if background playback becomes a priority — and the same mechanism is what
 would enable lock-screen transport controls via MediaSession, so those two would be one job.
 
+### Lock screen "Now Playing" — **deferred to post-release (2026-09-27)**
+
+**What was seen:** playing on iPhone, locking, then waking shows a Now Playing card titled
+**"No Sleep"** with the eel as artwork and transport buttons that don't control the album.
+
+**Why, and why it is not a bug to fix.** NoSleep.js uses the Wake Lock API when it exists and
+otherwise falls back to playing a hidden one-second looping `<video>` it labels "No Sleep".
+Wake Lock is **secure-context only**, so over `http://<LAN-IP>:8000` it is absent and the video
+branch runs; iOS then surfaces the only playing media it can see. Confirmed by deleting
+`navigator.wakeLock` in the browser: NoSleep builds exactly that element, `title="No Sleep"`,
+webm + mp4 sources, detached from the DOM. The eel is not deliberate either — with no
+MediaSession metadata set, iOS falls back to `apple-touch-icon.png`. The 0:00 / -0:01 progress
+is the one-second video, not a track.
+
+**So it is a local-testing artifact and disappears on HTTPS**, where Wake Lock is available and
+no video is created. Same family as the cluster K install-prompt miss: anything gated on a
+secure context behaves differently on the LAN rig than in production.
+
+**But it disappears completely**, which is the real finding. Web Audio creates no media
+session, so the live site shows *nothing* on the lock screen rather than a corrected card.
+
+**What a real Now Playing entry would need**, if wanted later: a silent media element to own
+the session, `navigator.mediaSession.metadata` (track title, "Gus By Heart", and artwork
+generated per track — the current colour and track name on a canvas, not a static screenshot,
+since the player looks different every track), and action handlers wiring the lock screen's
+next/play to the transport.
+
+**Why it was deferred rather than built:** it puts a playing media element beside the Web Audio
+chain and the 44.1 kHz pin (cluster E), which is the least-stable part of this project's
+history, and iOS suspends the context on lock anyway (cluster I), so the controls need care not
+to lie about what is playing. Post-release work, not a pre-release tweak.
+
+
 ### J. Renderer crash on rapid skipping (Android) — **[x] FIXED & verified on the Xcover 5 (2026-09-06)**
 
 Reported 2026-08-31 on the Samsung Galaxy Xcover 5, in **both** Chrome and the installed app:
