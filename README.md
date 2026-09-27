@@ -78,8 +78,9 @@ Each keeps its own licence.
 this repository are ℗ & © 2026 Gustav Svedung, all rights reserved. They are here because the
 player needs them in order to run, not as an invitation to redistribute them.
 
-The source code carries no licence, which under copyright means all rights reserved by
-default. If you'd like to do something with it, ask.
+**The source is closed too, deliberately.** No licence is granted for it — it's published so
+that the player runs and so that the work can be read, not for reuse. That's a choice rather
+than an omission. If you'd like to do something with any of it, ask.
 
 ---
 
