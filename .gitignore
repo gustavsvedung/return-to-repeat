@@ -28,3 +28,4 @@ BUGS.md
 PLANNING.md
 TESTING.md
 go-live.sh    (kept out of the repo)
+player.html   (local copy of the real player, for testing before release)
