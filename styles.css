@@ -191,11 +191,9 @@ header h1 {
     align-items: center;
     overflow: hidden;
     min-height: 0;
-    /* padding-top: push buttons DOWN from the track title.
-       Increase to move buttons lower, decrease to move them up. */
+    /* Top pad pushes the controls down from the track title; bottom pad is the
+       gap to the VU LEDs. The tagline sticks to the bottom via margin-top:auto. */
     padding: 80px 0 32px;
-    /* padding-bottom: gap between lyric line and VU LEDs.
-       The tagline always sticks to the bottom via margin-top:auto. */
 }
 
 /* === Section: VU LEDs (Braun inspired, round) === */
@@ -614,13 +612,10 @@ footer {
 
 footer p {
     margin: 0;
-    /* font-family: 'Jost', sans-serif; */
     font-size: 0.7rem;
     font-weight: 100;
-    /* letter-spacing: 0.1em; */
     word-spacing: 0.1em;
     color: var(--ink);
-    /* opacity: 0.8; */
 }
 
 #credits-trigger {

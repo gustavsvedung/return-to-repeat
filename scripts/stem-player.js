@@ -260,7 +260,6 @@ export class StemPlayer {
     const limiter = getMasterLimiter();
     const loadPromises = [];
 
-    // Load main track
     this.mainPlayer = new Tone.Player({
       url: AUDIO_PATH + audioFiles.main,
       loop: true,
@@ -278,7 +277,6 @@ export class StemPlayer {
       })
     );
 
-    // Load stems
     if (audioFiles.stems) {
       for (const [stemId, stemConfig] of Object.entries(audioFiles.stems)) {
         // Fader stems (defaultOn but volume 0) use lazy-start
@@ -308,7 +306,6 @@ export class StemPlayer {
       }
     }
 
-    // Wait for all to load
     try {
       await Tone.loaded();
 
@@ -377,7 +374,6 @@ export class StemPlayer {
       this.mainPlayer.volume.value = -Infinity;
     }
 
-    // Start main from paused position
     if (this.mainPlayer.state !== 'started') {
       this.mainPlayer.start(startTime, seekOffset);
     }
@@ -393,7 +389,6 @@ export class StemPlayer {
       }
     }
 
-    // Fade in after starting
     if (fade) {
       this.mainPlayer.volume.rampTo(0, 0.05);
     }
@@ -450,10 +445,8 @@ export class StemPlayer {
 
     const durationSec = durationMs / 1000;
 
-    // Fade main player volume to silence
     this.mainPlayer.volume.rampTo(-Infinity, durationSec);
 
-    // Fade all stem gains to 0
     for (const [stemId, gain] of Object.entries(this.stemGains)) {
       const state = this.stemStates[stemId];
       // Only fade stems that are actually audible
@@ -462,10 +455,8 @@ export class StemPlayer {
       }
     }
 
-    // Wait for fade to complete
     await new Promise(resolve => setTimeout(resolve, durationMs + 10));
 
-    // Now do the actual stop
     if (this.mainPlayer && this.mainPlayer.state === 'started') {
       this.mainPlayer.stop();
     }
@@ -476,7 +467,6 @@ export class StemPlayer {
       }
     }
 
-    // Reset started state for stems
     for (const state of Object.values(this.stemStates)) {
       state.started = false;
     }
@@ -521,7 +511,6 @@ export class StemPlayer {
     state.muted = muted;
 
     if (muted) {
-      // Fade out
       gain.gain.rampTo(0, 0.1);
     } else {
       // Unmuting — lazy-start stems need to sync to current position
@@ -531,7 +520,6 @@ export class StemPlayer {
         player.start(Tone.now(), offset);
         state.started = true;
       }
-      // Fade in
       gain.gain.rampTo(1, 0.1);
     }
   }
@@ -590,7 +578,6 @@ export class StemPlayer {
    * @returns {string} The newly active stem ID
    */
   cycleStem(stemIds, crossfadeMs = 100) {
-    // Find currently active stem
     let currentIndex = -1;
     for (let i = 0; i < stemIds.length; i++) {
       const state = this.stemStates[stemIds[i]];
@@ -600,7 +587,6 @@ export class StemPlayer {
       }
     }
 
-    // Calculate next index
     const nextIndex = (currentIndex + 1) % stemIds.length;
     const currentStemId = stemIds[currentIndex];
     const nextStemId = stemIds[nextIndex];
@@ -613,7 +599,6 @@ export class StemPlayer {
       this.stemStates[currentStemId].muted = true;
     }
 
-    // Ensure next stem is started
     const nextPlayer = this.stemPlayers[nextStemId];
     const nextState = this.stemStates[nextStemId];
     const nextGain = this.stemGains[nextStemId];
@@ -664,7 +649,6 @@ export class StemPlayer {
    * Clean up all players and gain nodes
    */
   dispose() {
-    // Stop everything immediately
     if (this.mainPlayer) {
       if (this.mainPlayer.state === 'started') {
         this.mainPlayer.stop();
@@ -753,7 +737,6 @@ export class SamplePlayer {
       this._silenceImmediate(this.activeId);
     }
 
-    // Quick fade in
     gain.gain.cancelScheduledValues(Tone.now());
     gain.gain.setValueAtTime(gain.gain.value, Tone.now());
     gain.gain.linearRampToValueAtTime(1, Tone.now() + 0.05);
@@ -778,12 +761,10 @@ export class SamplePlayer {
     // Only release if this is still the active note (prevents stale releases in monophonic)
     if (this.monophonic && this.activeId !== id) return;
 
-    // Quick fade out
     gain.gain.cancelScheduledValues(Tone.now());
     gain.gain.setValueAtTime(gain.gain.value, Tone.now());
     gain.gain.linearRampToValueAtTime(0, Tone.now() + 0.1);
 
-    // Stop after fade completes
     setTimeout(() => {
       if (player.state === 'started' && gain.gain.value < 0.01) {
         player.stop();
@@ -824,10 +805,8 @@ export class SamplePlayer {
 
     if (!player || !gain) return;
 
-    // Set to full volume immediately
     gain.gain.setValueAtTime(1, Tone.now());
 
-    // Restart from beginning
     player.stop();
     player.start();
   }
@@ -861,7 +840,6 @@ export class TrackPreloader {
    * @param {Object} audioFiles
    */
   async preload(trackId, audioFiles) {
-    // Dispose previous preload
     if (this.preloadedPlayer) {
       this.preloadedPlayer.dispose();
     }

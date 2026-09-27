@@ -104,10 +104,8 @@ const creditsWindow = document.getElementById('credits-window');
 // --- Initialization ---
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize NoSleep
   noSleep = new NoSleep();
 
-  // Initialize session
   initSession();
   incrementVisitCount();
 
@@ -128,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set up initial track display (no audio yet)
   updateTrackDisplay(currentTrackIndex);
 
-  // Event listeners
   playButton.addEventListener('click', handlePlayClick);
   nextButton.addEventListener('click', handleNextClick);
   shuffleButton.addEventListener('click', handleShuffleClick);
@@ -256,13 +253,11 @@ function updateTrackDisplay(trackIndex) {
   const track = tracks[trackIndex];
   const signals = resolveSignals();
 
-  // Check if locked
   const locked = track.isLocked(signals);
 
   // Select variation now so controls render immediately (before play)
   currentVariation = track.selectVariation ? track.selectVariation(signals) : null;
 
-  // Update UI
   trackTitle.textContent = track.title;
   if (trackTagline) {
     // No tagline on the locked page; otherwise re-roll on every page load
@@ -280,7 +275,6 @@ function updateTrackDisplay(trackIndex) {
   const lockedClass = locked ? ' locked' : '';
   container.className = `container track-${track.id}${lightUI}${lockedClass}`;
 
-  // Handle locked state
   if (locked) {
     showLockedState();
     renderLockedProgress(signals);
@@ -335,7 +329,6 @@ async function handlePlayClick() {
   const track = tracks[currentTrackIndex];
   const signals = resolveSignals();
 
-  // Check if locked
   if (track.isLocked(signals)) {
     console.log('Track is locked');
     return;
@@ -345,7 +338,6 @@ async function handlePlayClick() {
   if (!stemPlayer || !stemPlayer.isLoaded) {
     await loadAndPlayTrack(currentTrackIndex);
   } else {
-    // Toggle playback
     togglePlayback();
   }
 }
@@ -373,7 +365,6 @@ async function loadAndPlayTrack(trackIndex) {
   const track = tracks[trackIndex];
   const signals = resolveSignals();
 
-  // Show loading state
   setLoadingState(true);
 
   // Take our place in the queue before doing anything expensive.
@@ -400,7 +391,6 @@ async function loadAndPlayTrack(trackIndex) {
       console.log(`Track ${track.id}: using variation ${currentVariation || 'default'}`);
     }
 
-    // Get audio files
     const audioFiles = track.getAudioFiles(currentVariation);
 
     // Check if we have a preloaded player for this track
@@ -425,7 +415,6 @@ async function loadAndPlayTrack(trackIndex) {
     }
     stemPlayer = newStemPlayer;
 
-    // Load samples if track has them
     if (track.getSamples) {
       if (samplePlayer) {
         samplePlayer.dispose();
@@ -449,16 +438,12 @@ async function loadAndPlayTrack(trackIndex) {
     updatePlayButton();
     startVuMeter();
 
-    // Enable NoSleep
     enableNoSleep();
 
-    // Start listen timer
     startListenTimer(track.id);
 
-    // Increment play count
     incrementTrackPlayCount(track.id);
 
-    // Start preload timer for next track
     startPreloadTimer();
 
   } catch (error) {
@@ -598,11 +583,9 @@ async function handleNextClick() {
   // Stop current playback (or cancel in-progress load)
   await stopPlayback(!isLoading); // Skip fade if we're mid-load (nothing playing yet)
 
-  // Move to next track
   setPreviousTrack(tracks[currentTrackIndex].id);
   currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
 
-  // Update display
   updateTrackDisplay(currentTrackIndex);
 
   // Auto-play if was playing/loading, but not if new track is locked
@@ -630,7 +613,6 @@ async function handleShuffleClick() {
     currentTrackIndex = eligible[Math.floor(Math.random() * eligible.length)];
   }
 
-  // Update display
   updateTrackDisplay(currentTrackIndex);
 
   // Auto-play if was playing/loading, but not if new track is locked
@@ -753,63 +735,23 @@ function renderTrackControls(track, variation) {
     const strip = createSampleStrip(sampleControls);
     controlsContainer.appendChild(strip);
   }
-
-  // Render any remaining one-shot buttons normally
-  const oneShotControls = controls.filter(c => c.type === 'button' && c.behavior !== 'hold');
-  for (const control of oneShotControls) {
-    const element = createControlElement(control);
-    if (element) {
-      controlsContainer.appendChild(element);
-    }
-  }
 }
 
 function createControlElement(control) {
   switch (control.type) {
-    case 'mute':
-      return createMuteButton(control);
     case 'toggle':
       return createToggleButton(control);
     case 'effect-hold':
       return createEffectHoldButton(control);
-    case 'button':
-      return createSampleButton(control);
-    case 'cycle':
-      return createCycleButton(control);
     default:
       console.warn('Unknown control type:', control.type);
       return null;
   }
 }
-
-function createMuteButton(control) {
-  const button = document.createElement('button');
-  button.className = 'control-button mute-button';
-  button.dataset.stem = control.stem;
-  button.dataset.inverted = control.inverted || false;
-  button.innerHTML = `<i class="fa-solid fa-${control.icon || 'volume-high'}"></i>`;
-
-  // Initial state from intent (no audio engine needed before playback)
-  const seed = trackControlIntent[control.stem];
-  const initialMuted = seed ? seed.muted : !control.defaultOn;
-  button.classList.toggle('muted', control.inverted ? !initialMuted : initialMuted);
-
-  button.addEventListener('click', () => {
-    const entry = trackControlIntent[control.stem] || { kind: 'mute', muted: !control.defaultOn };
-    const newMuted = !entry.muted;
-    trackControlIntent[control.stem] = { kind: 'mute', muted: newMuted };
-    button.classList.toggle('muted', control.inverted ? !newMuted : newMuted);
-    if (isPlaying && stemPlayer) stemPlayer.setMuted(control.stem, newMuted);
-  });
-
-  return button;
-}
-
 function createToggleButton(control) {
   const wrapper = document.createElement('div');
   wrapper.className = 'toggle-control';
 
-  // LED indicator
   const led = document.createElement('div');
   led.className = 'toggle-led';
   if (control.defaultOn) led.classList.add('on');
@@ -867,7 +809,6 @@ function createEffectHoldButton(control) {
   img.className = 'toggle-img';
   button.appendChild(img);
 
-  // Animation state
   let intensity = 0;
   let isHeld = false;
   let lastTime = 0;
@@ -945,12 +886,10 @@ function createEffectHoldButton(control) {
     startAnim(); // Triggers the ramp-down phase
   }
 
-  // Mouse events
   button.addEventListener('mousedown', press);
   button.addEventListener('mouseup', release);
   button.addEventListener('mouseleave', release);
 
-  // Touch events
   button.addEventListener('touchstart', (e) => {
     e.preventDefault();
     press();
@@ -1046,10 +985,7 @@ function createSampleStrip(controls) {
       }
       button.appendChild(masked);
     } else {
-      const icon = document.createElement('i');
-      icon.className = `fa-solid fa-${control.icon || 'circle'}`;
-      if (control.color) icon.style.color = control.color;
-      button.appendChild(icon);
+      console.warn(`Sample control "${control.sample}" has no image — the button will be blank.`);
     }
     button.dataset.sample = control.sample;
 
@@ -1062,13 +998,11 @@ function createSampleStrip(controls) {
     if (!samplePlayer) return; // No samples loaded until the track is playing
     if (activeSampleId === sampleId) return; // Already active
 
-    // Release previous
     if (activeSampleId) {
       samplePlayer.release(activeSampleId);
       if (activeButton) activeButton.classList.remove('active');
     }
 
-    // Trigger new
     samplePlayer.trigger(sampleId);
     btn.classList.add('active');
 
@@ -1157,37 +1091,6 @@ function createSampleStrip(controls) {
 
   return strip;
 }
-
-function createSampleButton(control) {
-  const button = document.createElement('button');
-  button.className = 'control-button sample-button';
-  button.innerHTML = `<i class="fa-solid fa-${control.icon || 'circle'}"></i>`;
-
-  // One-shot trigger (non-hold buttons still use the old path)
-  button.addEventListener('click', () => samplePlayer.triggerOneShot(control.sample));
-
-  return button;
-}
-
-function createCycleButton(control) {
-  const button = document.createElement('button');
-  button.className = 'control-button cycle-button';
-  let currentIndex = 0;
-
-  // Set initial icon
-  button.innerHTML = `<i class="fa-solid fa-${control.icons[currentIndex] || 'circle'}"></i>`;
-
-  button.addEventListener('click', () => {
-    const nextStem = stemPlayer.cycleStem(control.stems, control.crossfade || 100);
-
-    // Update icon
-    currentIndex = (currentIndex + 1) % control.icons.length;
-    button.innerHTML = `<i class="fa-solid fa-${control.icons[currentIndex] || 'circle'}"></i>`;
-  });
-
-  return button;
-}
-
 /**
  * Create a radio-group of stem-select buttons (Track 9 cat buttons).
  * Exactly one button is active at a time. The active stem is unmuted;
@@ -1272,7 +1175,6 @@ function startListenTimer(trackId) {
   listenTimer = setInterval(() => {
     if (!isPlaying) return;
 
-    // Add a second of listen time
     const totalTime = addTrackListenTime(trackId, 1);
 
     // Check if we've crossed the threshold. Use >= (not ===) so a skipped
@@ -1301,7 +1203,6 @@ function stopListenTimer() {
 function startPreloadTimer() {
   stopPreloadTimer();
 
-  // Start preloading after 10 seconds
   preloadTimer = setTimeout(() => {
     preloadNextTrack();
   }, 10000);
@@ -1325,7 +1226,6 @@ function preloadNextTrack() {
     return;
   }
 
-  // Select variation for preload
   const variation = nextTrack.selectVariation ? nextTrack.selectVariation(signals) : null;
   const audioFiles = nextTrack.getAudioFiles(variation);
 
@@ -1353,7 +1253,6 @@ function dbToSegments(db) {
 
 function updateVuMeter() {
   if (!isPlaying) {
-    // Clear all segments when not playing
     for (const seg of vuSegments) {
       seg.classList.remove('lit');
     }
@@ -1381,7 +1280,6 @@ function stopVuMeter() {
     cancelAnimationFrame(vuAnimationId);
     vuAnimationId = null;
   }
-  // Clear segments
   for (const seg of vuSegments) {
     seg.classList.remove('lit');
   }

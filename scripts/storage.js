@@ -155,18 +155,14 @@ export function isAlbumCompleteInCycle() {
  * Automatically checks for album completion and handles unlock
  */
 export function onTrackListenThresholdReached(trackId) {
-  // Mark this track as heard
   markTrackHeard(trackId);
 
-  // Check if album is now complete
   if (isAlbumCompleteInCycle()) {
     const completions = incrementAlbumCompletions();
     console.log(`Album completion #${completions} achieved!`);
 
-    // Reset cycle for next album listen
     resetCurrentListenCycle();
 
-    // Check for unlocks
     if (completions >= 5) {
       setUnlock('track11', true);
       console.log('Track 11 unlocked!');

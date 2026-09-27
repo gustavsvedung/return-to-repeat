@@ -112,7 +112,6 @@ function getMoonPhase(date = new Date()) {
   const daysSinceReference = (date - REFERENCE_NEW_MOON) / (1000 * 60 * 60 * 24);
   const phasePosition = ((daysSinceReference % LUNAR_CYCLE) + LUNAR_CYCLE) % LUNAR_CYCLE;
 
-  // Determine phase name
   let phase;
   if (phasePosition < 1.85) {
     phase = "new";
