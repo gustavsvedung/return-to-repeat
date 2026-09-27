@@ -27,5 +27,9 @@ ARCHITECTURE.md
 BUGS.md
 PLANNING.md
 TESTING.md
-go-live.sh    (kept out of the repo)
-player.html   (local copy of the real player, for testing before release)
+
+# Release script: restores index.html from history and pushes
+go-live.sh
+
+# Local copy of the real player, for testing while index.html is the date card
+player.html
