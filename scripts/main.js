@@ -61,7 +61,7 @@ let loadGeneration = 0; // Increments on each load — used to cancel stale load
 // load still pulls every file and decodes it before discovering it was
 // cancelled — and nothing can abort a decode already in flight. Six rapid Next
 // presses therefore allocated ~500 MB of buffers for one track actually needed,
-// which is what crashed the renderer on Android (BUGS.md J). Queuing means a
+// which is what crashed the renderer on low-memory Android phones. Queuing means a
 // superseded load reaches its generation check *before* allocating anything and
 // costs nothing. Web Audio holds buffers as float32 stereo, so the numbers are
 // brutal: Track 6 alone is 204 MB decoded, Track 1 is 92 MB.

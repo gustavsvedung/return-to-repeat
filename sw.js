@@ -9,7 +9,7 @@
  *
  * - The audio is ~178 MB. Precaching it is irresponsible, and iOS evicts
  *   web-app storage after about a week of disuse anyway. Streaming was the
- *   deliberate decision (see BUGS.md / the PWA notes).
+ *   deliberate decision.
  * - A cache layer here would fight `no_cache_server.py`, which exists precisely
  *   so that editing a file and reloading shows the new file. Silent staleness
  *   would be a tax on every future change to this project.

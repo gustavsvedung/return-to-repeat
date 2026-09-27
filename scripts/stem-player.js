@@ -20,7 +20,7 @@ const AUDIO_PATH = 'audio/';
 // --- AudioContext sample rate ---
 // An AudioContext's sample rate is fixed at creation and otherwise follows
 // whichever output device happens to be active at that moment. That was the
-// trigger behind BUGS.md E: load on the phone's own output (48 kHz) and switch
+// trigger behind the AirPlay distortion: load on the phone's own output (48 kHz) and switch
 // to AirPlay (44.1 kHz) afterwards, and iOS has to resample the live stream —
 // which is when it distorted. Loading with AirPlay already connected was clean.
 //
@@ -165,7 +165,7 @@ function sliceBuffer(audioBuffer, start, end) {
     // zero included), and roughly 4x faster. Worth it because a five-minute
     // stereo stem is ~26M samples and this runs once per stem, on the load
     // path, where every millisecond widens the window that the fast-skip
-    // race (BUGS.md B) and the rapid-skip crash (BUGS.md J) both lived in.
+    // fast-skip race and the rapid-skip renderer crash both lived in.
     // Nothing about sync or looping rides on this: the trim window and the
     // output length are both already fixed by the time we get here.
     out.getChannelData(ch).set(audioBuffer.getChannelData(ch).subarray(s, e));

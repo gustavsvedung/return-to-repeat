@@ -14,5 +14,16 @@ node_modules/
 # Obsidian workspace config (created by opening the repo as a vault to read the docs)
 .obsidian/
 
-# Claude Code local settings (personal permission grants — not for the repo)
-.claude/settings.local.json
+# Claude Code (tooling, not part of the work)
+.claude/
+CLAUDE.md
+
+# Working notes. Kept on disk and in the Obsidian vault, deliberately out of the
+# public repo — they are the workshop rather than the work. Note that removing
+# them changes what the repo *reads* like, not what it discloses: tracks.js states
+# every unlock condition in plain code and signals.js documents every debug
+# parameter, so the album's mechanics are legible from the source either way.
+ARCHITECTURE.md
+BUGS.md
+PLANNING.md
+TESTING.md
