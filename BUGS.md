@@ -486,6 +486,39 @@ means the eel stays scarce: it appears only on the home screen and on Track 11.
 Name kept as the full "Return to Repeat" — it fits on the iPhone home screen without
 truncating, so the shorter forms weren't needed.
 
+**Revised 2026-09-27 — the tab is now an `R` set in Jost 200.** Two earlier attempts were
+built and rejected by eye before this one, which is the point of recording it.
+
+*The eel was tried first and looked wrong in place.* It survives downscaling better than
+expected — the 1-bit halftone averages into a solid form below ~32px, so H's moiré never
+enters — but as a tab mark it reads as an anonymous dark squiggle. The abstract loop mark
+that preceded it was crisper at 16px but, in Gustav's read, looked like a meditation app
+rather than this record.
+
+*`RTR` was tried next and fails at 16px.* Three Jost 200 hairlines across 16 pixels is about
+six pixels a letter, and the strokes never reach full pixel coverage, so it renders as pale
+grey mush — including a version with weight added. It reads fine from 32px up. Since retina
+displays draw a 16 CSS px favicon from the 32px entry, `RTR` would have looked correct for
+most viewers and poor for anyone on a non-retina screen. Not worth the split.
+
+*A single `R` is legible at every size*, and is the title face rather than a picture. The
+tradeoff taken knowingly: a lone R is generic where RTR would have been specific to the album.
+
+Build notes, since none of this is guessable from the file. Glyphs are rendered **directly at
+each target size**, not downscaled from a large master — for type that is visibly crisper at
+16px. Each size carries a little added stroke weight (0.28/0.35/0.4px at 16/32/48) so the
+three read as one mark; pure Jost 200 goes spindly and grey at small sizes, and weighting only
+the smallest made it look like a different, bolder letter. Ground is `#E7E1D3`, ink `#2B2620`.
+Force `-depth 8` when writing the ICO: a 16-bit intermediate doubles the file for no gain
+(15 KB vs 7.4 KB).
+
+The eel stays on the home screen and on Track 11, so the scarcity argument in the original
+decision survives intact — a visitor still doesn't meet it before earning it.
+
+Tab title also changed from `RETURN TO REPEAT` to `Return to Repeat`: correct title case, and
+it now matches `apple-mobile-web-app-title` and the manifest name, which both already read
+that way.
+
 ### I. Background audio doesn't survive backgrounding on iOS — **platform limit, documented**
 
 The PWA handover notes claimed Add to Home Screen already gave background audio "somewhat by
