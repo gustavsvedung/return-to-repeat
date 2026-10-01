@@ -1,59 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Return to Repeat</title>
-<meta name="description" content="An album by Gus By Heart.">
-<meta name="theme-color" content="#E7E1D3">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<!-- Roll over to the album by itself once it is live, so anyone already sitting
-     on this page doesn't have to think to reload. -->
-<meta http-equiv="refresh" content="60">
-<style>
-@font-face {
-    font-family: 'Jost';
-    font-style: normal;
-    font-weight: 200;
-    font-display: swap;
-    src: url('vendor/fonts/jost-200-normal-latin.woff2') format('woff2');
-}
-* { box-sizing: border-box; }
-html, body {
-    margin: 0;
-    height: 100%;
-    background: #E7E1D3;
-    color: #2B2620;
-    font-family: 'Jost', -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 200;
-}
-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 24px;
-}
-h1 {
-    margin: 0;
-    font-size: clamp(1.1rem, 4.4vw, 1.5rem);
-    font-weight: 200;
-    letter-spacing: 0.055em;
-    line-height: 1.25;
-    text-transform: uppercase;
-}
-p.date {
-    margin: clamp(28px, 9vh, 64px) 0 0;
-    font-size: clamp(2.4rem, 13vw, 4.6rem);
-    font-weight: 200;
-    letter-spacing: 0.04em;
-    line-height: 1;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Return to Repeat</title>
+    <meta name="description" content="An interactive music player by Gus By Heart.">
+    <meta name="keywords" content="music, audio, loop player, Gus By Heart, Return to Repeat">
+    <meta name="author" content="Gus By Heart">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Installable-app metadata. iOS installs via Share > Add to Home Screen and
+         reads the apple-* tags; Android reads manifest.json. theme-color is kept
+         in sync with the current track by main.js. -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#E7E1D3">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Return to Repeat">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <!-- Everything is served from this origin: no CDN, no third-party request
+         before a note plays, and the album renders the same for as long as these
+         files exist. Fonts are self-hosted in styles.css; icons are inlined below. -->
+    <script src="vendor/nosleep.min.js"></script>
+    <script src="vendor/tone.min.js"></script>
 </head>
 <body>
-    <h1>Gus by Heart<br>Return to Repeat</h1>
-    <p class="date">2026.10.02</p>
+        <!-- Icon sprite (was: kit.fontawesome.com). Paths are Font Awesome Free
+             6.5.2 solid icons, CC BY 4.0 — https://fontawesome.com. Inlined so the
+             transport never depends on a third-party kit that is tied to an account. -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true">
+        <symbol id="icon-play" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></symbol>
+        <symbol id="icon-pause" viewBox="0 0 320 512"><path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></symbol>
+        <symbol id="icon-forward-step" viewBox="0 0 320 512"><path d="M52.5 440.6c-9.5 7.9-22.8 9.7-34.1 4.4S0 428.4 0 416V96C0 83.6 7.2 72.3 18.4 67s24.5-3.6 34.1 4.4l192 160L256 241V96c0-17.7 14.3-32 32-32s32 14.3 32 32V416c0 17.7-14.3 32-32 32s-32-14.3-32-32V271l-11.5 9.6-192 160z"/></symbol>
+        <symbol id="icon-shuffle" viewBox="0 0 512 512"><path d="M403.8 34.4c12-5 25.7-2.2 34.9 6.9l64 64c6 6 9.4 14.1 9.4 22.6s-3.4 16.6-9.4 22.6l-64 64c-9.2 9.2-22.9 11.9-34.9 6.9s-19.8-16.6-19.8-29.6V160H352c-10.1 0-19.6 4.7-25.6 12.8L284 229.3 244 176l31.2-41.6C293.3 110.2 321.8 96 352 96h32V64c0-12.9 7.8-24.6 19.8-29.6zM164 282.7L204 336l-31.2 41.6C154.7 401.8 126.2 416 96 416H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H96c10.1 0 19.6-4.7 25.6-12.8L164 282.7zm274.6 188c-9.2 9.2-22.9 11.9-34.9 6.9s-19.8-16.6-19.8-29.6V416H352c-30.2 0-58.7-14.2-76.8-38.4L121.6 172.8c-6-8.1-15.5-12.8-25.6-12.8H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H96c30.2 0 58.7 14.2 76.8 38.4L326.4 339.2c6 8.1 15.5 12.8 25.6 12.8h32V320c0-12.9 7.8-24.6 19.8-29.6s25.7-2.2 34.9 6.9l64 64c6 6 9.4 14.1 9.4 22.6s-3.4 16.6-9.4 22.6l-64 64z"/></symbol>
+        <symbol id="icon-circle-notch" viewBox="0 0 512 512"><path d="M222.7 32.1c5 16.9-4.6 34.8-21.5 39.8C121.8 95.6 64 169.1 64 256c0 106 86 192 192 192s192-86 192-192c0-86.9-57.8-160.4-137.1-184.1c-16.9-5-26.6-22.9-21.5-39.8s22.9-26.6 39.8-21.5C434.9 42.1 512 140 512 256c0 141.4-114.6 256-256 256S0 397.4 0 256C0 140 77.1 42.1 182.9 10.6c16.9-5 34.8 4.6 39.8 21.5z"/></symbol>
+        <symbol id="icon-share" viewBox="0 0 448 512"><path d="M246.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-128 128c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 109.3 192 320c0 17.7 14.3 32 32 32s32-14.3 32-32l0-210.7 73.4 73.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-128-128zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-64z"/></symbol>
+        <symbol id="icon-triangle-exclamation" viewBox="0 0 512 512"><path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24V296c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/></symbol>
+        </svg>
+
+    <div class="container track-1">
+
+        <!-- Section: Header -->
+        <header>
+            <h1>Gus by Heart<br>Return to Repeat</h1>
+        </header>
+
+        <!-- Section: Track title -->
+        <div class="track-name">
+            <h2 class="track-title">one</h2>
+        </div>
+
+        <!-- Section: Track-specific area (flex-grows to fill space) -->
+        <div class="track-area">
+            <!-- Track-specific controls (mute buttons, faders, etc.) -->
+            <div id="track-controls" class="track-controls"></div>
+
+            <!-- Tagline / lyric line shown below the controls -->
+            <p id="track-tagline" class="track-tagline"></p>
+        </div>
+
+        <!-- Section: VU LEDs -->
+        <div class="vu-leds" id="vu-leds">
+            <div class="vu-segment" data-level="1"></div>
+            <div class="vu-segment" data-level="2"></div>
+            <div class="vu-segment" data-level="3"></div>
+            <div class="vu-segment" data-level="4"></div>
+            <div class="vu-segment" data-level="5"></div>
+        </div>
+
+        <!-- Section: Transport controls -->
+        <div class="transport">
+            <button id="play-button" class="transport-btn" aria-label="Play">
+                <svg class="btn-icon"><use href="#icon-play"></use></svg>
+            </button>
+            <div class="nav-buttons-container">
+                <button id="next-button" class="transport-btn" aria-label="Next">
+                    <svg class="btn-icon"><use href="#icon-forward-step"></use></svg>
+                </button>
+                <button id="shuffle-button" class="transport-btn" aria-label="Shuffle">
+                    <svg class="btn-icon"><use href="#icon-shuffle"></use></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Section: Footer -->
+        <footer>
+            <p id="credits-trigger">NOTES</p>
+        </footer>
+
+        <!-- Credits (opens from footer, closes on outside click).
+             Backdrop is full-screen; the window is centred over the card. -->
+        <div id="credits-overlay" class="credits-overlay" hidden></div>
+        <div id="credits-window" class="credits-window" hidden>
+            <p>Composed, performed, recorded and built by Gus By Heart, except</p>
+            <ul>
+                <li>3 – vocals by Frida Svedung</li>
+                <li>7 – vocals by Ilse Svedung</li>
+            </ul>
+            <p><a href="https://www.gusbyheart.se" target="_blank" rel="noopener">www.gusbyheart.se</a></p>
+            <p>℗ &amp; © 2026 Gustav Svedung</p>
+
+            <!-- Install invitation. Hidden by default; main.js reveals it only
+                 when the album isn't already installed and the listener has been
+                 here before. Lives inside NOTES on purpose — an invitation you
+                 come across, not a banner that interrupts. -->
+            <div id="install-invite" class="install-invite" hidden>
+                <p id="install-invite-text"></p>
+                <button id="install-button" type="button" hidden>Add to home screen</button>
+            </div>
+        </div>
+
+        <!-- Phone-landscape hint. iOS Safari won't let a tab lock orientation, so
+             instead of rendering the clipped landscape layout we cover it and ask
+             for portrait. Audio keeps playing underneath. -->
+        <div id="rotate-hint" class="rotate-hint">
+            <p>Turn the phone upright</p>
+        </div>
+
+    </div>
+    <script src="scripts/main.js" type="module"></script>
 </body>
 </html>
