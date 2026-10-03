@@ -24,9 +24,11 @@
 
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <!-- Everything is served from this origin: no CDN, no third-party request
-         before a note plays, and the album renders the same for as long as these
-         files exist. Fonts are self-hosted in styles.css; icons are inlined below. -->
+    <!-- Everything is served from this origin: no CDN, and the album renders the
+         same for as long as these files exist. Fonts are self-hosted in styles.css;
+         icons are inlined below. The one outbound request is an anonymous
+         GoatCounter ping (scripts/analytics.js), sent once the page is idle —
+         the player works the same if it's blocked. -->
     <script src="vendor/nosleep.min.js"></script>
     <script src="vendor/tone.min.js"></script>
 </head>

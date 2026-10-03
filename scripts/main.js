@@ -16,6 +16,7 @@ import {
   isTrackHeardInCycle,
   debugStorage
 } from './storage.js';
+import { initAnalytics, track as trackEvent } from './analytics.js';
 
 // --- Install invitation ---
 // Chrome fires beforeinstallprompt when the app qualifies for installation, but
@@ -108,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initSession();
   incrementVisitCount();
+  initAnalytics();
 
   // Debug: ?track=N opens straight on that track instead of Track 1. Saves
   // pressing Next six times to reach Track 7 on a phone, and lets the manifest
@@ -443,6 +445,9 @@ async function loadAndPlayTrack(trackIndex) {
     startListenTimer(track.id);
 
     incrementTrackPlayCount(track.id);
+
+    // e.g. "play/03B" — which tracks get played, and which variation was served
+    trackEvent(`play/${String(track.id).padStart(2, '0')}${currentVariation || ''}`, track.title);
 
     startPreloadTimer();
 
@@ -1185,6 +1190,10 @@ function startListenTimer(trackId) {
       const result = onTrackListenThresholdReached(trackId);
       if (result.albumCompleted) {
         console.log(`Album completed! Total: ${result.totalCompletions}`);
+        // Bucket at 5+: past the unlock, the exact count says nothing new
+        const n = result.totalCompletions;
+        trackEvent(`album-complete/${n >= 5 ? '5+' : n}`);
+        if (n === 5) trackEvent('unlock/track11');
         // Could show a subtle notification here
       }
     }
