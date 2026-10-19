@@ -148,6 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     creditsTrigger.addEventListener('click', () => setCreditsOpen(true));
     creditsOverlay.addEventListener('click', () => setCreditsOpen(false));
+    // gusbyheart.se has no analytics of its own, so count the click from here.
+    // Opens in a new tab, so the player stays alive to send the ping.
+    creditsWindow.querySelector('a[href*="gusbyheart.se"]')
+      ?.addEventListener('click', () => trackEvent('click/notes-homepage', 'NOTES → gusbyheart.se'));
   }
 
   setUpInstallInvite();
